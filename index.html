@@ -95,6 +95,58 @@ body{
   background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:10px;
   padding:10px 14px;font-size:12px;margin-top:16px;
 }
+.auth-success{
+  background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:10px;
+  padding:10px 14px;font-size:12px;margin-top:16px;
+}
+
+.masjid-list{display:flex;flex-direction:column;gap:12px;margin-top:16px;}
+.masjid-card{
+  background:#fff;border:1px solid var(--border);border-radius:20px;padding:14px;
+  display:flex;gap:12px;cursor:pointer;text-align:left;width:100%;
+}
+.masjid-card-photo{
+  width:64px;height:64px;border-radius:14px;background:var(--brand-light);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:22px;
+}
+.masjid-card-body{flex:1;min-width:0;}
+.masjid-card-name{font-weight:700;font-size:14px;margin:0;display:flex;align-items:center;gap:6px;}
+.badge-verified{
+  font-size:9px;background:var(--brand-light);color:var(--brand);padding:2px 6px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:2px;font-weight:700;
+}
+.masjid-card-addr{font-size:12px;color:rgba(27,36,32,0.5);margin:2px 0 0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.masjid-card-dist{font-size:11px;color:var(--brand);margin-top:4px;font-weight:600;}
+
+.back-btn{background:none;border:none;color:var(--brand);font-weight:700;font-size:14px;padding:0;margin-bottom:16px;}
+
+.detail-header{
+  height:140px;border-radius:20px;background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+  display:flex;align-items:flex-end;padding:16px;color:#fff;
+}
+.detail-title{font-size:18px;font-weight:800;margin:0;}
+.detail-section{margin-top:16px;}
+.detail-section h3{font-size:13px;font-weight:700;margin:0 0 6px;color:rgba(27,36,32,0.5);text-transform:uppercase;letter-spacing:0.02em;}
+.detail-section p{font-size:14px;color:rgba(27,36,32,0.8);margin:0;line-height:1.6;}
+.pill-row{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{font-size:11px;background:var(--brand-light);color:var(--brand-dark);padding:5px 10px;border-radius:999px;}
+.detail-actions{display:flex;gap:8px;margin-top:16px;}
+.btn-secondary{
+  flex:1;border:1px solid var(--border);background:#fff;border-radius:12px;padding:12px;font-weight:700;font-size:13px;
+}
+.btn-secondary.is-active{background:var(--brand-light);color:var(--brand);border-color:transparent;}
+
+.form-row{display:flex;gap:8px;}
+.form-row input{
+  border-radius:12px;border:1px solid var(--border);background:rgba(27,36,32,0.03);
+  padding:13px 16px;font-size:14px;outline:none;margin-bottom:12px;
+}
+#masjid-add-form input, #masjid-add-form textarea{
+  border-radius:12px;border:1px solid var(--border);background:rgba(27,36,32,0.03);
+  padding:13px 16px;font-size:14px;outline:none;margin-bottom:12px;font-family:inherit;width:100%;
+}
+#masjid-add-form input:focus, #masjid-add-form textarea:focus{border-color:var(--brand);}
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
   padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
@@ -280,18 +332,54 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 
     <!-- Masjid -->
     <div id="tab-masjid" class="tab">
-      <h1 class="page-title">Temukan masjid di sekitar Anda</h1>
-      <p class="muted">Setiap masjid adalah ruang ibadah, ilmu, dan kebaikan bagi umat.</p>
-      <input class="search-input" placeholder="Cari nama masjid, alamat, atau lokasi..." />
-      <div class="chip-row">
-        <span class="chip active">Semua</span>
-        <span class="chip">Terdekat</span>
-        <span class="chip">Terverifikasi</span>
-        <span class="chip">Favorit</span>
-        <span class="chip">Unggulan</span>
+
+      <!-- List view -->
+      <div id="masjid-view-list">
+        <h1 class="page-title">Temukan masjid di sekitar Anda</h1>
+        <p class="muted">Setiap masjid adalah ruang ibadah, ilmu, dan kebaikan bagi umat.</p>
+        <input id="masjid-search" class="search-input" placeholder="Cari nama masjid, alamat, atau lokasi..." />
+        <div class="chip-row" id="masjid-filters">
+          <span class="chip active" data-filter="semua">Semua</span>
+          <span class="chip" data-filter="terdekat">Terdekat</span>
+          <span class="chip" data-filter="terverifikasi">Terverifikasi</span>
+          <span class="chip" data-filter="favorit">Favorit</span>
+          <span class="chip" data-filter="unggulan">Unggulan</span>
+        </div>
+        <div id="masjid-list" class="masjid-list"></div>
+        <button class="btn-primary" id="btn-add-masjid">+ Tambahkan Masjid</button>
       </div>
-      <div class="empty-state tall">Belum ada masjid di sekitar Anda. Direktori akan aktif setelah integrasi database (Fase 3).</div>
-      <button class="btn-primary">+ Tambahkan Masjid</button>
+
+      <!-- Detail view -->
+      <div id="masjid-view-detail" hidden>
+        <button class="back-btn" id="masjid-detail-back">‹ Kembali</button>
+        <div id="masjid-detail-content"></div>
+      </div>
+
+      <!-- Add masjid form -->
+      <div id="masjid-view-add" hidden>
+        <button class="back-btn" id="masjid-add-back">‹ Kembali</button>
+        <h1 class="page-title">Tambahkan Masjid</h1>
+        <p class="muted">Masjid akan tampil di direktori setelah diverifikasi admin.</p>
+        <p id="masjid-add-error" class="auth-error" hidden></p>
+        <p id="masjid-add-success" class="auth-success" hidden></p>
+        <form id="masjid-add-form">
+          <input required placeholder="Nama Masjid" id="f-name" />
+          <input required placeholder="Alamat" id="f-address" />
+          <div class="form-row">
+            <input placeholder="Kelurahan/Desa" id="f-village" />
+            <input placeholder="Kecamatan" id="f-district" />
+          </div>
+          <div class="form-row">
+            <input placeholder="Kota/Kabupaten" id="f-city" />
+            <input placeholder="Provinsi" id="f-province" />
+          </div>
+          <input placeholder="No. Telepon" id="f-phone" />
+          <input placeholder="Website" id="f-website" />
+          <textarea placeholder="Deskripsi singkat" id="f-description" rows="3"></textarea>
+          <button type="submit" class="btn-primary">Kirim untuk Verifikasi</button>
+        </form>
+      </div>
+
     </div>
 
     <!-- Doa -->
@@ -521,9 +609,350 @@ document.querySelectorAll('[data-nav]').forEach((el) => {
   el.addEventListener('click', () => {
     showScreen('app')
     setActiveTab(el.dataset.nav)
+    if (el.dataset.nav === 'masjid') loadMasjidList()
   })
 })
 
+// ============================================================
+// ===== Phase 3: Direktori & Detail Masjid, Tambah Masjid ====
+// ============================================================
+let currentMasjidFilter = 'semua'
+let currentUserId = null
+let userCoords = null
+let favoriteIds = new Set()
+
+async function getCurrentUserId() {
+  if (!supabase) return null
+  const { data } = await supabase.auth.getSession()
+  return data.session ? data.session.user.id : null
+}
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLon = ((lon2 - lon1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function maybeRequestLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 5000 }
+    )
+  })
+}
+
+async function loadFavoriteIds() {
+  favoriteIds = new Set()
+  if (!supabase || !currentUserId) return
+  const { data } = await supabase.from('favorites_masjid').select('masjid_id').eq('user_id', currentUserId)
+  if (data) data.forEach((r) => favoriteIds.add(r.masjid_id))
+}
+
+async function loadMasjidList() {
+  const listEl = document.getElementById('masjid-list')
+  currentUserId = await getCurrentUserId()
+  listEl.innerHTML = '<div class="empty-state">Memuat data masjid...</div>'
+
+  if (!supabase) {
+    listEl.innerHTML = '<div class="empty-state tall">Supabase belum terhubung.</div>'
+    return
+  }
+
+  const keyword = document.getElementById('masjid-search').value.trim()
+
+  if (currentUserId) await loadFavoriteIds()
+
+  if (currentMasjidFilter === 'favorit') {
+    if (!currentUserId) {
+      listEl.innerHTML = '<div class="empty-state tall">Masuk dulu untuk melihat masjid favorit Anda.</div>'
+      return
+    }
+    const { data, error } = await supabase
+      .from('favorites_masjid')
+      .select('masjid:masjids(*)')
+      .eq('user_id', currentUserId)
+    if (error) {
+      listEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
+      return
+    }
+    renderMasjidList((data || []).map((r) => r.masjid).filter(Boolean))
+    return
+  }
+
+  let query = supabase.from('masjids').select('*')
+
+  if (currentMasjidFilter === 'unggulan') {
+    query = query.eq('is_featured', true).eq('verification_status', 'verified')
+  } else if (currentMasjidFilter === 'terverifikasi') {
+    query = query.eq('verification_status', 'verified')
+  }
+  // 'semua' & 'terdekat' pakai policy select default (verified + milik sendiri)
+
+  if (keyword) {
+    query = query.or(`name.ilike.%${keyword}%,city.ilike.%${keyword}%,address.ilike.%${keyword}%`)
+  }
+
+  query = query.order('created_at', { ascending: false }).limit(30)
+
+  const { data, error } = await query
+  if (error) {
+    listEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
+    return
+  }
+
+  let results = data || []
+
+  if (currentMasjidFilter === 'terdekat') {
+    if (!userCoords) userCoords = await maybeRequestLocation()
+    if (userCoords) {
+      results = results
+        .filter((m) => m.latitude != null && m.longitude != null)
+        .map((m) => ({ ...m, _distance: haversineKm(userCoords.lat, userCoords.lng, m.latitude, m.longitude) }))
+        .sort((a, b) => a._distance - b._distance)
+    }
+  }
+
+  renderMasjidList(results)
+}
+
+function renderMasjidList(items) {
+  const listEl = document.getElementById('masjid-list')
+  if (!items.length) {
+    listEl.innerHTML = '<div class="empty-state tall">Belum ada masjid untuk ditampilkan.</div>'
+    return
+  }
+  listEl.innerHTML = ''
+  items.forEach((m) => {
+    const card = document.createElement('button')
+    card.className = 'masjid-card'
+    card.innerHTML = `
+      <div class="masjid-card-photo">🕌</div>
+      <div class="masjid-card-body">
+        <p class="masjid-card-name">${escapeHtml(m.name)} ${
+      m.verification_status === 'verified' ? '<span class="badge-verified">✓ Terverifikasi</span>' : ''
+    }</p>
+        <p class="masjid-card-addr">${escapeHtml(m.address || m.city || '-')}</p>
+        ${m._distance != null ? `<p class="masjid-card-dist">${m._distance.toFixed(1)} km dari lokasi Anda</p>` : ''}
+      </div>`
+    card.addEventListener('click', () => openMasjidDetail(m.id))
+    listEl.appendChild(card)
+  })
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div')
+  div.textContent = str || ''
+  return div.innerHTML
+}
+
+document.getElementById('masjid-filters').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip')
+  if (!chip) return
+  document.querySelectorAll('#masjid-filters .chip').forEach((c) => c.classList.remove('active'))
+  chip.classList.add('active')
+  currentMasjidFilter = chip.dataset.filter
+  loadMasjidList()
+})
+
+let searchDebounce
+document.getElementById('masjid-search').addEventListener('input', () => {
+  clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(loadMasjidList, 400)
+})
+
+// ---- Detail masjid ----
+async function openMasjidDetail(masjidId) {
+  document.getElementById('masjid-view-list').hidden = true
+  document.getElementById('masjid-view-detail').hidden = false
+  const content = document.getElementById('masjid-detail-content')
+  content.innerHTML = '<div class="empty-state">Memuat detail masjid...</div>'
+
+  const [{ data: masjid, error }, { data: facilities }, { data: events }, { data: announcements }, { data: staff }] =
+    await Promise.all([
+      supabase.from('masjids').select('*').eq('id', masjidId).single(),
+      supabase.from('masjid_facilities').select('*').eq('masjid_id', masjidId),
+      supabase
+        .from('masjid_events')
+        .select('*')
+        .eq('masjid_id', masjidId)
+        .eq('status', 'published')
+        .order('event_date', { ascending: true })
+        .limit(5),
+      supabase
+        .from('masjid_announcements')
+        .select('*')
+        .eq('masjid_id', masjidId)
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(5),
+      supabase.from('masjid_staff').select('*').eq('masjid_id', masjidId),
+    ])
+
+  if (error || !masjid) {
+    content.innerHTML = `<div class="empty-state tall">Masjid tidak ditemukan.</div>`
+    return
+  }
+
+  currentUserId = await getCurrentUserId()
+  let isManager = false
+  if (currentUserId) {
+    const { data: mgr } = await supabase
+      .from('masjid_managers')
+      .select('role')
+      .eq('masjid_id', masjidId)
+      .eq('user_id', currentUserId)
+      .maybeSingle()
+    isManager = !!mgr
+  }
+  const isFavorited = favoriteIds.has(masjidId)
+
+  content.innerHTML = `
+    <div class="detail-header"><h2 class="detail-title">${escapeHtml(masjid.name)}</h2></div>
+    <div class="detail-section">
+      <h3>Status</h3>
+      <p>${
+        masjid.verification_status === 'verified'
+          ? '<span class="badge-verified">✓ Terverifikasi</span>'
+          : 'Menunggu verifikasi admin'
+      }</p>
+    </div>
+    <div class="detail-section">
+      <h3>Alamat</h3>
+      <p>${escapeHtml(masjid.address || '-')}${masjid.city ? ', ' + escapeHtml(masjid.city) : ''}${
+    masjid.province ? ', ' + escapeHtml(masjid.province) : ''
+  }</p>
+    </div>
+    ${
+      masjid.description
+        ? `<div class="detail-section"><h3>Deskripsi</h3><p>${escapeHtml(masjid.description)}</p></div>`
+        : ''
+    }
+    ${
+      masjid.history
+        ? `<div class="detail-section"><h3>Sejarah</h3><p>${escapeHtml(masjid.history)}</p></div>`
+        : ''
+    }
+    ${
+      facilities && facilities.length
+        ? `<div class="detail-section"><h3>Fasilitas</h3><div class="pill-row">${facilities
+            .map((f) => `<span class="pill">${escapeHtml(f.facility_name)}</span>`)
+            .join('')}</div></div>`
+        : ''
+    }
+    ${
+      staff && staff.length
+        ? `<div class="detail-section"><h3>Pengurus</h3>${staff
+            .map((s) => `<p>${escapeHtml(s.name)}${s.role_title ? ' — ' + escapeHtml(s.role_title) : ''}</p>`)
+            .join('')}</div>`
+        : ''
+    }
+    ${
+      events && events.length
+        ? `<div class="detail-section"><h3>Kegiatan Mendatang</h3>${events
+            .map((ev) => `<p><b>${escapeHtml(ev.title)}</b> — ${ev.event_date}</p>`)
+            .join('')}</div>`
+        : ''
+    }
+    ${
+      announcements && announcements.length
+        ? `<div class="detail-section"><h3>Pengumuman</h3>${announcements
+            .map((a) => `<p><b>${escapeHtml(a.title)}</b><br>${escapeHtml(a.content)}</p>`)
+            .join('')}</div>`
+        : ''
+    }
+    ${masjid.phone || masjid.website ? `<div class="detail-section"><h3>Kontak</h3>
+        ${masjid.phone ? `<p>${escapeHtml(masjid.phone)}</p>` : ''}
+        ${masjid.website ? `<p>${escapeHtml(masjid.website)}</p>` : ''}
+      </div>` : ''}
+    <div class="detail-actions">
+      <button class="btn-secondary ${isFavorited ? 'is-active' : ''}" id="btn-fav-toggle">
+        ${isFavorited ? '♥ Favorit' : '♡ Favoritkan'}
+      </button>
+      ${isManager ? '<button class="btn-secondary">⚙ Kelola Masjid</button>' : ''}
+    </div>
+  `
+
+  document.getElementById('btn-fav-toggle').addEventListener('click', async () => {
+    if (!currentUserId) {
+      showScreen('login')
+      return
+    }
+    if (favoriteIds.has(masjidId)) {
+      await supabase.from('favorites_masjid').delete().eq('user_id', currentUserId).eq('masjid_id', masjidId)
+      favoriteIds.delete(masjidId)
+    } else {
+      await supabase.from('favorites_masjid').insert({ user_id: currentUserId, masjid_id: masjidId })
+      favoriteIds.add(masjidId)
+    }
+    openMasjidDetail(masjidId)
+  })
+}
+
+document.getElementById('masjid-detail-back').addEventListener('click', () => {
+  document.getElementById('masjid-view-detail').hidden = true
+  document.getElementById('masjid-view-list').hidden = false
+})
+
+// ---- Tambah masjid ----
+document.getElementById('btn-add-masjid').addEventListener('click', async () => {
+  currentUserId = await getCurrentUserId()
+  if (!currentUserId) {
+    showScreen('login')
+    return
+  }
+  document.getElementById('masjid-view-list').hidden = true
+  document.getElementById('masjid-view-add').hidden = false
+})
+
+document.getElementById('masjid-add-back').addEventListener('click', () => {
+  document.getElementById('masjid-view-add').hidden = true
+  document.getElementById('masjid-view-list').hidden = false
+})
+
+document.getElementById('masjid-add-form').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const errEl = document.getElementById('masjid-add-error')
+  const okEl = document.getElementById('masjid-add-success')
+  errEl.hidden = true
+  okEl.hidden = true
+
+  const payload = {
+    name: document.getElementById('f-name').value.trim(),
+    address: document.getElementById('f-address').value.trim(),
+    village: document.getElementById('f-village').value.trim() || null,
+    district: document.getElementById('f-district').value.trim() || null,
+    city: document.getElementById('f-city').value.trim() || null,
+    province: document.getElementById('f-province').value.trim() || null,
+    phone: document.getElementById('f-phone').value.trim() || null,
+    website: document.getElementById('f-website').value.trim() || null,
+    description: document.getElementById('f-description').value.trim() || null,
+    created_by: currentUserId,
+    verification_status: 'pending',
+  }
+
+  const { error } = await supabase.from('masjids').insert(payload)
+  if (error) {
+    errEl.textContent = error.message
+    errEl.hidden = false
+    return
+  }
+
+  okEl.textContent = 'Berhasil dikirim! Masjid akan tampil setelah diverifikasi admin.'
+  okEl.hidden = false
+  document.getElementById('masjid-add-form').reset()
+  setTimeout(() => {
+    document.getElementById('masjid-view-add').hidden = true
+    document.getElementById('masjid-view-list').hidden = false
+    loadMasjidList()
+  }, 1500)
+})
 
 })
 </script>
