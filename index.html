@@ -163,6 +163,63 @@ body{
   background:linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.55));
 }
 .detail-header .detail-title{position:relative;z-index:1;}
+.surat-list{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+.surat-card{
+  background:#fff;border:1px solid var(--border);border-radius:16px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;cursor:pointer;width:100%;text-align:left;
+}
+.surat-number{
+  width:36px;height:36px;border-radius:10px;background:var(--brand-light);color:var(--brand);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;
+}
+.surat-info{flex:1;min-width:0;}
+.surat-name-latin{font-weight:700;font-size:14px;margin:0;}
+.surat-meta{font-size:11px;color:rgba(27,36,32,0.45);margin:2px 0 0;}
+.surat-name-arab{font-size:16px;color:var(--brand-dark);font-family:serif;}
+
+.ayat-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;}
+.ayat-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.ayat-number{
+  width:26px;height:26px;border-radius:50%;background:var(--brand-light);color:var(--brand);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+}
+.ayat-actions{display:flex;gap:10px;}
+.ayat-actions button{background:none;border:none;font-size:16px;color:rgba(27,36,32,0.35);padding:0;}
+.ayat-actions button.is-active{color:var(--gold);}
+.ayat-arab{font-size:22px;line-height:2;text-align:right;font-family:serif;color:var(--ink);margin-bottom:10px;}
+.ayat-latin{font-size:12px;font-style:italic;color:rgba(27,36,32,0.5);margin-bottom:6px;}
+.ayat-translation{font-size:13px;color:rgba(27,36,32,0.75);line-height:1.6;}
+
+.doa-item{cursor:pointer;}
+.doa-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;}
+.doa-card-title{font-weight:700;font-size:14px;margin:0 0 10px;}
+.doa-card-arab{font-size:20px;line-height:1.9;text-align:right;font-family:serif;margin-bottom:8px;}
+.doa-card-latin{font-size:12px;font-style:italic;color:rgba(27,36,32,0.5);margin-bottom:8px;}
+.doa-card-translation{font-size:13px;color:rgba(27,36,32,0.75);line-height:1.6;margin-bottom:8px;}
+.doa-card-source{font-size:11px;color:var(--brand);font-weight:600;}
+
+.belajar-card{
+  width:100%;margin-top:16px;background:linear-gradient(135deg,#fff,var(--brand-light));
+  border:1px solid var(--border);border-radius:20px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;
+}
+.belajar-card-icon{font-size:28px;}
+.belajar-card-text{flex:1;text-align:left;display:flex;flex-direction:column;}
+.belajar-card-text b{font-size:14px;color:var(--brand-dark);}
+.belajar-card-text small{font-size:11px;color:rgba(27,36,32,0.5);margin-top:2px;}
+.belajar-card-arrow{font-size:20px;color:var(--brand);}
+
+.article-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer;}
+.article-card b{font-size:14px;display:block;margin-bottom:4px;}
+.article-card p{font-size:12px;color:rgba(27,36,32,0.55);margin:0;line-height:1.5;}
+.article-content h1{font-size:19px;font-weight:800;color:var(--brand-dark);margin:0 0 6px;}
+.article-content .article-meta{font-size:11px;color:rgba(27,36,32,0.45);margin-bottom:16px;}
+.article-content .article-body{font-size:14px;line-height:1.8;color:rgba(27,36,32,0.85);white-space:pre-line;}
+.article-content .article-ref{margin-top:16px;font-size:12px;color:var(--brand);font-weight:600;}
+.article-disclaimer{
+  margin-top:20px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;
+  font-size:11px;color:#92400e;line-height:1.5;
+}
+
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
   padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
@@ -334,16 +391,34 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
         <button class="feature-item" data-nav="masjid"><span class="feature-icon"></span>Kegiatan</button>
       </div>
 
+      <button class="belajar-card" id="btn-open-belajar">
+        <span class="belajar-card-icon">📚</span>
+        <span class="belajar-card-text">
+          <b>Belajar Islam</b>
+          <small>Al-Qur'an, Hadis, Fiqih, Aqidah, Akhlak, Sirah, Tafsir & Keluarga</small>
+        </span>
+        <span class="belajar-card-arrow">›</span>
+      </button>
+
       <h2 class="mt">Kegiatan Mendatang</h2>
       <div class="empty-state">Belum ada kegiatan.</div>
     </div>
 
     <!-- Al-Qur'an -->
     <div id="tab-quran" class="tab">
-      <h1 class="page-title">Al-Qur'an</h1>
-      <p class="muted">114 surat, pencarian, bookmark, dan audio murottal.</p>
-      <input class="search-input" placeholder="Cari surat atau ayat..." />
-      <div class="empty-state tall">Daftar surat akan tampil di sini setelah integrasi sumber data Al-Qur'an (Fase 4).</div>
+      <div id="quran-view-list">
+        <h1 class="page-title">Al-Qur'an</h1>
+        <p class="muted">114 surat, pencarian, bookmark, dan audio murottal.</p>
+        <input id="quran-search" class="search-input" placeholder="Cari nama surat..." />
+        <div id="quran-surat-list" class="surat-list">
+          <div class="empty-state">Memuat daftar surat...</div>
+        </div>
+      </div>
+      <div id="quran-view-detail" hidden>
+        <button class="back-btn" id="quran-detail-back">‹ Kembali</button>
+        <div id="quran-detail-header"></div>
+        <div id="quran-ayat-list"></div>
+      </div>
     </div>
 
     <!-- Masjid -->
@@ -405,17 +480,17 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 
     <!-- Doa -->
     <div id="tab-doa" class="tab">
-      <h1 class="page-title">Doa</h1>
-      <p class="muted">Kumpulan doa harian lengkap dengan referensi.</p>
-      <div class="doa-grid">
-        <div class="doa-item">Doa Harian</div>
-        <div class="doa-item">Sebelum Tidur</div>
-        <div class="doa-item">Bangun Tidur</div>
-        <div class="doa-item">Makan</div>
-        <div class="doa-item">Perjalanan</div>
-        <div class="doa-item">Keluarga</div>
-        <div class="doa-item">Ibadah</div>
-        <div class="doa-item">Perlindungan</div>
+      <div id="doa-view-categories">
+        <h1 class="page-title">Doa</h1>
+        <p class="muted">Kumpulan doa harian lengkap dengan referensi.</p>
+        <div class="doa-grid" id="doa-grid">
+          <div class="empty-state">Memuat kategori doa...</div>
+        </div>
+      </div>
+      <div id="doa-view-list" hidden>
+        <button class="back-btn" id="doa-list-back">‹ Kembali</button>
+        <h1 class="page-title" id="doa-list-title"></h1>
+        <div id="doa-list-content"></div>
       </div>
     </div>
 
@@ -466,6 +541,29 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       Akun
     </button>
   </nav>
+</section>
+
+<!-- ===================== BELAJAR ISLAM (standalone screen) ===================== -->
+<section id="screen-belajar" class="screen">
+  <div class="app-shell">
+    <div id="belajar-view-categories" style="padding:40px 20px 24px;">
+      <button class="back-btn" id="belajar-back-to-app">‹ Kembali</button>
+      <h1 class="page-title">Belajar Islam</h1>
+      <p class="muted">Materi ringkas seputar Al-Qur'an, Hadis, Fiqih, Aqidah, Akhlak, Sirah, Tafsir, dan Keluarga.</p>
+      <div class="doa-grid" id="belajar-grid">
+        <div class="empty-state">Memuat kategori...</div>
+      </div>
+    </div>
+    <div id="belajar-view-list" style="padding:40px 20px 24px;" hidden>
+      <button class="back-btn" id="belajar-list-back">‹ Kembali</button>
+      <h1 class="page-title" id="belajar-list-title"></h1>
+      <div id="belajar-list-content"></div>
+    </div>
+    <div id="belajar-view-article" style="padding:40px 20px 24px;" hidden>
+      <button class="back-btn" id="belajar-article-back">‹ Kembali</button>
+      <div id="belajar-article-content"></div>
+    </div>
+  </div>
 </section>
 
 <script>
@@ -1009,6 +1107,346 @@ document.getElementById('masjid-add-form').addEventListener('submit', async (e) 
     submitBtn.disabled = false
     submitBtn.textContent = originalLabel
   }
+})
+
+// ============================================================
+// ===== Phase 4: Al-Qur'an (EQuran.id API) ===================
+// ============================================================
+const QURAN_API = 'https://equran.id/api/v2'
+let allSurat = []
+let quranBookmarkIds = new Set()
+
+async function loadQuranBookmarks() {
+  quranBookmarkIds = new Set()
+  const uid = await getCurrentUserId()
+  if (!supabase || !uid) return
+  const { data } = await supabase.from('quran_bookmarks').select('surah_number,ayat_number').eq('user_id', uid)
+  if (data) data.forEach((r) => quranBookmarkIds.add(`${r.surah_number}:${r.ayat_number}`))
+}
+
+async function loadSuratList() {
+  const listEl = document.getElementById('quran-surat-list')
+  if (allSurat.length) {
+    renderSuratList(allSurat)
+    return
+  }
+  try {
+    const res = await fetch(`${QURAN_API}/surat`)
+    const json = await res.json()
+    allSurat = json.data || []
+    renderSuratList(allSurat)
+  } catch (err) {
+    listEl.innerHTML = '<div class="empty-state tall">Gagal memuat daftar surat. Cek koneksi internet Anda.</div>'
+  }
+}
+
+function renderSuratList(items) {
+  const listEl = document.getElementById('quran-surat-list')
+  if (!items.length) {
+    listEl.innerHTML = '<div class="empty-state tall">Surat tidak ditemukan.</div>'
+    return
+  }
+  listEl.innerHTML = ''
+  items.forEach((s) => {
+    const card = document.createElement('button')
+    card.className = 'surat-card'
+    card.innerHTML = `
+      <div class="surat-number">${s.nomor}</div>
+      <div class="surat-info">
+        <p class="surat-name-latin">${escapeHtml(s.namaLatin)}</p>
+        <p class="surat-meta">${escapeHtml(s.tempatTurun || '')} · ${s.jumlahAyat} ayat · ${escapeHtml(s.arti || '')}</p>
+      </div>
+      <div class="surat-name-arab">${s.nama || ''}</div>
+    `
+    card.addEventListener('click', () => openSuratDetail(s.nomor))
+    listEl.appendChild(card)
+  })
+}
+
+document.getElementById('quran-search').addEventListener('input', (e) => {
+  const kw = e.target.value.trim().toLowerCase()
+  if (!kw) { renderSuratList(allSurat); return }
+  renderSuratList(allSurat.filter((s) => s.namaLatin.toLowerCase().includes(kw) || (s.arti || '').toLowerCase().includes(kw)))
+})
+
+async function openSuratDetail(nomor) {
+  document.getElementById('quran-view-list').hidden = true
+  document.getElementById('quran-view-detail').hidden = false
+  const headerEl = document.getElementById('quran-detail-header')
+  const ayatEl = document.getElementById('quran-ayat-list')
+  headerEl.innerHTML = ''
+  ayatEl.innerHTML = '<div class="empty-state">Memuat ayat...</div>'
+
+  await loadQuranBookmarks()
+
+  try {
+    const res = await fetch(`${QURAN_API}/surat/${nomor}`)
+    const json = await res.json()
+    const s = json.data
+    headerEl.innerHTML = `
+      <h1 class="page-title">${escapeHtml(s.namaLatin)} <span class="surat-name-arab">${s.nama}</span></h1>
+      <p class="muted">${escapeHtml(s.tempatTurun || '')} · ${s.jumlahAyat} ayat · ${escapeHtml(s.arti || '')}</p>
+    `
+    ayatEl.innerHTML = ''
+    ;(s.ayat || []).forEach((a) => {
+      const key = `${nomor}:${a.nomorAyat}`
+      const isBookmarked = quranBookmarkIds.has(key)
+      const audioUrl = a.audio ? Object.values(a.audio)[0] : null
+      const card = document.createElement('div')
+      card.className = 'ayat-card'
+      card.innerHTML = `
+        <div class="ayat-top">
+          <span class="ayat-number">${a.nomorAyat}</span>
+          <div class="ayat-actions">
+            ${audioUrl ? `<button class="ayat-play" data-audio="${audioUrl}">▶</button>` : ''}
+            <button class="ayat-bookmark ${isBookmarked ? 'is-active' : ''}" data-surah="${nomor}" data-ayat="${a.nomorAyat}">${isBookmarked ? '★' : '☆'}</button>
+          </div>
+        </div>
+        <p class="ayat-arab">${a.teksArab}</p>
+        ${a.teksLatin ? `<p class="ayat-latin">${escapeHtml(a.teksLatin)}</p>` : ''}
+        <p class="ayat-translation">${escapeHtml(a.teksIndonesia)}</p>
+      `
+      ayatEl.appendChild(card)
+    })
+
+    ayatEl.querySelectorAll('.ayat-play').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('audio.quran-audio').forEach((el) => el.remove())
+        const audio = new Audio(btn.dataset.audio)
+        audio.className = 'quran-audio'
+        audio.play()
+      })
+    })
+
+    ayatEl.querySelectorAll('.ayat-bookmark').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const uid = await getCurrentUserId()
+        if (!uid) { showScreen('login'); return }
+        const surahNum = Number(btn.dataset.surah)
+        const ayatNum = Number(btn.dataset.ayat)
+        const key = `${surahNum}:${ayatNum}`
+        if (quranBookmarkIds.has(key)) {
+          await supabase.from('quran_bookmarks').delete().eq('user_id', uid).eq('surah_number', surahNum).eq('ayat_number', ayatNum)
+          quranBookmarkIds.delete(key)
+          btn.textContent = '☆'
+          btn.classList.remove('is-active')
+        } else {
+          await supabase.from('quran_bookmarks').insert({ user_id: uid, surah_number: surahNum, ayat_number: ayatNum })
+          quranBookmarkIds.add(key)
+          btn.textContent = '★'
+          btn.classList.add('is-active')
+        }
+      })
+    })
+  } catch (err) {
+    ayatEl.innerHTML = '<div class="empty-state tall">Gagal memuat ayat. Cek koneksi internet Anda.</div>'
+  }
+}
+
+document.getElementById('quran-detail-back').addEventListener('click', () => {
+  document.querySelectorAll('audio.quran-audio').forEach((el) => el.remove())
+  document.getElementById('quran-view-detail').hidden = true
+  document.getElementById('quran-view-list').hidden = false
+})
+
+// ============================================================
+// ===== Phase 4: Doa (Supabase) ===============================
+// ============================================================
+let doaBookmarkIds = new Set()
+
+async function loadDoaBookmarks() {
+  doaBookmarkIds = new Set()
+  const uid = await getCurrentUserId()
+  if (!supabase || !uid) return
+  const { data } = await supabase.from('doa_bookmarks').select('doa_id').eq('user_id', uid)
+  if (data) data.forEach((r) => doaBookmarkIds.add(r.doa_id))
+}
+
+async function loadDoaCategories() {
+  const gridEl = document.getElementById('doa-grid')
+  if (!supabase) {
+    gridEl.innerHTML = '<div class="empty-state tall">Supabase belum terhubung.</div>'
+    return
+  }
+  const { data, error } = await supabase.from('doas').select('category')
+  if (error) {
+    gridEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
+    return
+  }
+  const counts = {}
+  ;(data || []).forEach((d) => { counts[d.category] = (counts[d.category] || 0) + 1 })
+  const categories = Object.keys(counts)
+  if (!categories.length) {
+    gridEl.innerHTML = '<div class="empty-state tall">Belum ada data doa.</div>'
+    return
+  }
+  gridEl.innerHTML = ''
+  categories.forEach((cat) => {
+    const item = document.createElement('div')
+    item.className = 'doa-item'
+    item.innerHTML = `${escapeHtml(cat)}<br><span class="masjid-card-dist">${counts[cat]} doa</span>`
+    item.addEventListener('click', () => openDoaCategory(cat))
+    gridEl.appendChild(item)
+  })
+}
+
+async function openDoaCategory(category) {
+  document.getElementById('doa-view-categories').hidden = true
+  document.getElementById('doa-view-list').hidden = false
+  document.getElementById('doa-list-title').textContent = category
+  const listEl = document.getElementById('doa-list-content')
+  listEl.innerHTML = '<div class="empty-state">Memuat doa...</div>'
+
+  await loadDoaBookmarks()
+
+  const { data, error } = await supabase.from('doas').select('*').eq('category', category).order('sort_order')
+  if (error) {
+    listEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
+    return
+  }
+  listEl.innerHTML = ''
+  ;(data || []).forEach((d) => {
+    const isBookmarked = doaBookmarkIds.has(d.id)
+    const card = document.createElement('div')
+    card.className = 'doa-card'
+    card.innerHTML = `
+      <div class="ayat-top">
+        <p class="doa-card-title">${escapeHtml(d.title)}</p>
+        <button class="ayat-bookmark ${isBookmarked ? 'is-active' : ''}" data-doa="${d.id}">${isBookmarked ? '★' : '☆'}</button>
+      </div>
+      <p class="doa-card-arab">${d.arabic_text}</p>
+      ${d.latin_text ? `<p class="doa-card-latin">${escapeHtml(d.latin_text)}</p>` : ''}
+      <p class="doa-card-translation">${escapeHtml(d.translation_id)}</p>
+      ${d.source_reference ? `<p class="doa-card-source">${escapeHtml(d.source_reference)}</p>` : ''}
+    `
+    listEl.appendChild(card)
+  })
+
+  listEl.querySelectorAll('.ayat-bookmark').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const uid = await getCurrentUserId()
+      if (!uid) { showScreen('login'); return }
+      const doaId = btn.dataset.doa
+      if (doaBookmarkIds.has(doaId)) {
+        await supabase.from('doa_bookmarks').delete().eq('user_id', uid).eq('doa_id', doaId)
+        doaBookmarkIds.delete(doaId)
+        btn.textContent = '☆'
+        btn.classList.remove('is-active')
+      } else {
+        await supabase.from('doa_bookmarks').insert({ user_id: uid, doa_id: doaId })
+        doaBookmarkIds.add(doaId)
+        btn.textContent = '★'
+        btn.classList.add('is-active')
+      }
+    })
+  })
+}
+
+document.getElementById('doa-list-back').addEventListener('click', () => {
+  document.getElementById('doa-view-list').hidden = true
+  document.getElementById('doa-view-categories').hidden = false
+})
+
+// ---- Load data when navigating into these tabs ----
+document.querySelectorAll('[data-nav]').forEach((el) => {
+  el.addEventListener('click', () => {
+    const tab = el.dataset.nav
+    if (tab === 'quran') loadSuratList()
+    if (tab === 'doa') loadDoaCategories()
+  })
+})
+
+// ============================================================
+// ===== Phase 4: Belajar Islam (standalone screen) ============
+// ============================================================
+document.getElementById('btn-open-belajar').addEventListener('click', () => {
+  showScreen('belajar')
+  document.getElementById('belajar-view-list').hidden = true
+  document.getElementById('belajar-view-article').hidden = true
+  document.getElementById('belajar-view-categories').hidden = false
+  loadBelajarCategories()
+})
+
+document.getElementById('belajar-back-to-app').addEventListener('click', () => {
+  showScreen('app')
+})
+
+async function loadBelajarCategories() {
+  const gridEl = document.getElementById('belajar-grid')
+  if (!supabase) {
+    gridEl.innerHTML = '<div class="empty-state tall">Supabase belum terhubung.</div>'
+    return
+  }
+  const { data, error } = await supabase.from('learning_contents').select('category')
+  if (error) {
+    gridEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
+    return
+  }
+  const counts = {}
+  ;(data || []).forEach((d) => { counts[d.category] = (counts[d.category] || 0) + 1 })
+  const categories = Object.keys(counts)
+  if (!categories.length) {
+    gridEl.innerHTML = '<div class="empty-state tall">Belum ada materi.</div>'
+    return
+  }
+  gridEl.innerHTML = ''
+  categories.forEach((cat) => {
+    const item = document.createElement('div')
+    item.className = 'doa-item'
+    item.innerHTML = `${escapeHtml(cat)}<br><span class="masjid-card-dist">${counts[cat]} materi</span>`
+    item.addEventListener('click', () => openBelajarCategory(cat))
+    gridEl.appendChild(item)
+  })
+}
+
+async function openBelajarCategory(category) {
+  document.getElementById('belajar-view-categories').hidden = true
+  document.getElementById('belajar-view-list').hidden = false
+  document.getElementById('belajar-list-title').textContent = category
+  const listEl = document.getElementById('belajar-list-content')
+  listEl.innerHTML = '<div class="empty-state">Memuat materi...</div>'
+
+  const { data, error } = await supabase.from('learning_contents').select('*').eq('category', category).order('created_at')
+  if (error) {
+    listEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
+    return
+  }
+  listEl.innerHTML = ''
+  ;(data || []).forEach((a) => {
+    const card = document.createElement('div')
+    card.className = 'article-card'
+    card.innerHTML = `<b>${escapeHtml(a.title)}</b><p>${escapeHtml(a.summary || '')}</p>`
+    card.addEventListener('click', () => openBelajarArticle(a))
+    listEl.appendChild(card)
+  })
+}
+
+document.getElementById('belajar-list-back').addEventListener('click', () => {
+  document.getElementById('belajar-view-list').hidden = true
+  document.getElementById('belajar-view-categories').hidden = false
+})
+
+async function openBelajarArticle(article) {
+  document.getElementById('belajar-view-list').hidden = true
+  document.getElementById('belajar-view-article').hidden = false
+  document.getElementById('belajar-article-content').innerHTML = `
+    <div class="article-content">
+      <h1>${escapeHtml(article.title)}</h1>
+      <p class="article-meta">${escapeHtml(article.category)}${article.source ? ' · ' + escapeHtml(article.source) : ''}</p>
+      <div class="article-body">${escapeHtml(article.content)}</div>
+      ${article.reference ? `<p class="article-ref">${escapeHtml(article.reference)}</p>` : ''}
+      <p class="article-disclaimer">Materi ini disusun untuk pembelajaran umum dan bukan fatwa. Untuk persoalan hukum agama yang spesifik, konsultasikan kepada ustadz/ulama yang terpercaya.</p>
+    </div>
+  `
+  const uid = await getCurrentUserId()
+  if (uid) {
+    supabase.from('learning_history').insert({ user_id: uid, learning_content_id: article.id }).then(() => {})
+  }
+}
+
+document.getElementById('belajar-article-back').addEventListener('click', () => {
+  document.getElementById('belajar-view-article').hidden = true
+  document.getElementById('belajar-view-list').hidden = false
 })
 
 })
