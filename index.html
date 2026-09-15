@@ -179,7 +179,7 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 <body>
 
 <!-- ===================== SPLASH ===================== -->
-<section id="screen-splash" class="screen active">
+<section id="screen-splash" class="screen active" onclick="showScreen('login')">
   <div class="app-shell splash">
     <img src="icon-192.png" alt="MasjidKu" class="logo-lg" />
     <h1 class="brand-title">Masjid<span>Ku</span></h1>
@@ -354,6 +354,7 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 </section>
 
 <script>
+document.addEventListener('DOMContentLoaded', function () {
 // ===== PWA service worker =====
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'))
@@ -416,6 +417,8 @@ document.querySelectorAll('[data-nav]').forEach((el) => {
   })
 })
 
+
+})
 </script>
 </body>
 </html>
