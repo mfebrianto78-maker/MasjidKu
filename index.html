@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0F5C3F" />
+<title>MasjidKu — Ruang Digital Masjid Untuk Umat</title>
+<link rel="icon" href="favicon-32.png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="manifest" href="manifest.json" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --brand:#0F5C3F;
+  --brand-dark:#0A3D2A;
+  --brand-light:#E8F3ED;
+  --gold:#D4A94A;
+  --ink:#1B2420;
+  --bg:#FAFAF7;
+  --border:rgba(27,36,32,0.08);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{
+  font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+}
+.screen{display:none;}
+.screen.active{display:block;}
+.app-shell{
+  max-width:480px;
+  margin:0 auto;
+  min-height:100dvh;
+  position:relative;
+  background:var(--bg);
+}
+
+/* ---- Splash ---- */
+.splash{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:0 32px;
+  background:linear-gradient(180deg,var(--brand-light),var(--bg));
+}
+.logo-lg{width:96px;height:96px;border-radius:22px;margin-bottom:20px;}
+.logo-md{width:72px;height:72px;border-radius:18px;}
+.brand-title{font-size:28px;font-weight:800;color:var(--brand-dark);margin:0;}
+.brand-title.sm{font-size:22px;margin-top:12px;}
+.brand-title span{color:var(--brand);}
+.brand-tagline{font-size:13px;color:rgba(27,36,32,0.6);margin-top:6px;}
+.powered-by{position:absolute;bottom:40px;left:0;right:0;text-align:center;font-size:11px;color:rgba(27,36,32,0.35);}
+.powered-by.center{position:static;margin-top:28px;}
+
+/* ---- Login ---- */
+.login-hero{
+  background:linear-gradient(180deg,var(--brand-light),transparent);
+  padding:56px 32px 32px;display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+.login-card{
+  background:#fff;border-radius:2rem 2rem 0 0;margin-top:-16px;padding:32px 24px;
+  box-shadow:0 -8px 24px rgba(0,0,0,0.04);
+}
+.login-card h2{text-align:center;margin:0;font-size:20px;font-weight:700;}
+.muted{color:rgba(27,36,32,0.5);font-size:14px;}
+.muted.center{text-align:center;margin-top:24px;}
+.muted.small{font-size:12px;}
+#login-form{margin-top:24px;display:flex;flex-direction:column;gap:14px;}
+#login-form input{
+  width:100%;border-radius:12px;border:1px solid var(--border);background:rgba(27,36,32,0.03);
+  padding:13px 16px;font-size:14px;outline:none;
+}
+#login-form input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,92,63,0.12);}
+.pw-wrap{position:relative;}
+.pw-wrap button{
+  position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  background:none;border:none;font-size:12px;color:rgba(27,36,32,0.4);
+}
+.row-between{display:flex;align-items:center;justify-content:space-between;font-size:12px;}
+.checkbox{display:flex;align-items:center;gap:6px;color:rgba(27,36,32,0.6);}
+.link-btn{background:none;border:none;color:var(--brand);font-weight:600;font-size:12px;}
+.link-strong{color:var(--brand);font-weight:600;}
+.link-white{background:none;border:none;color:rgba(255,255,255,0.9);font-weight:600;font-size:12px;}
+.btn-primary{
+  width:100%;border:none;border-radius:12px;background:var(--brand);color:#fff;font-weight:700;
+  padding:14px;font-size:15px;box-shadow:0 6px 16px rgba(15,92,63,0.25);cursor:pointer;
+}
+.btn-primary:active{transform:scale(0.99);}
+.guest-btn{
+  width:100%;background:none;border:none;text-align:center;font-size:12px;
+  color:rgba(27,36,32,0.4);margin-top:16px;text-decoration:underline;cursor:pointer;
+}
+.btn-outline-danger{
+  width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
+  padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
+}
+
+/* ---- App tabs ---- */
+#screen-app .app-shell{padding-bottom:88px;}
+.tab{display:none;padding:40px 20px 24px;}
+.tab.active{display:block;}
+.greeting{color:rgba(27,36,32,0.6);font-size:14px;margin:0;}
+.page-title{font-size:20px;font-weight:800;color:var(--brand-dark);margin:4px 0 8px;}
+
+.prayer-card{
+  margin-top:20px;border-radius:20px;padding:20px;color:#fff;
+  background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+}
+.prayer-head{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.7);}
+.prayer-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center;margin-top:16px;}
+.prayer-grid small{display:block;font-size:11px;color:rgba(255,255,255,0.7);}
+.prayer-grid b{font-size:14px;}
+
+.quote-card{
+  margin-top:16px;border-radius:20px;background:#fff;border:1px solid var(--border);
+  padding:16px;font-size:14px;color:rgba(27,36,32,0.7);line-height:1.6;
+}
+.quote-ref{margin-top:8px;font-size:12px;font-weight:700;color:var(--brand);}
+
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:8px;}
+.section-head h2{font-size:14px;font-weight:700;margin:0;}
+h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
+
+.feature-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.feature-item{
+  background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;
+}
+.feature-icon{width:44px;height:44px;border-radius:14px;background:var(--brand-light);}
+.feature-item span.feature-icon{display:block;}
+.feature-item{font-size:10px;color:rgba(27,36,32,0.7);line-height:1.2;text-align:center;}
+
+.empty-state{
+  border-radius:20px;border:1.5px dashed var(--border);background:rgba(27,36,32,0.02);
+  padding:32px 16px;text-align:center;color:rgba(27,36,32,0.4);font-size:13px;margin-top:8px;
+}
+.empty-state.tall{padding:56px 16px;margin-top:20px;}
+
+.search-input{
+  width:100%;margin-top:16px;border-radius:12px;border:1px solid var(--border);
+  padding:13px 16px;font-size:14px;background:#fff;outline:none;
+}
+.search-input:focus{border-color:var(--brand);}
+
+.chip-row{display:flex;gap:8px;margin-top:12px;overflow-x:auto;font-size:12px;}
+.chip{padding:6px 14px;border-radius:999px;background:rgba(27,36,32,0.05);color:rgba(27,36,32,0.6);white-space:nowrap;}
+.chip.active{background:var(--brand);color:#fff;}
+
+.doa-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+.doa-item{background:#fff;border:1px solid var(--border);border-radius:20px;padding:16px;font-size:14px;font-weight:600;color:rgba(27,36,32,0.8);}
+
+.profile-row{display:flex;align-items:center;gap:12px;}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--brand-light);color:var(--brand);
+  display:flex;align-items:center;justify-content:center;font-weight:700;}
+.profile-name{font-weight:700;margin:0;}
+.menu-card{margin-top:20px;background:#fff;border:1px solid var(--border);border-radius:20px;overflow:hidden;}
+.menu-item{
+  display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--border);
+  padding:14px 16px;font-size:14px;color:rgba(27,36,32,0.8);cursor:pointer;
+}
+.menu-item:last-child{border-bottom:none;}
+
+/* ---- Bottom nav ---- */
+.bottom-nav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+  background:#fff;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;padding:8px 8px calc(6px + env(safe-area-inset-bottom));
+}
+.nav-item{
+  flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;color:rgba(27,36,32,0.4);cursor:pointer;padding:4px 0;
+}
+.nav-item svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.nav-item.active{color:var(--brand);}
+.nav-item.active svg{stroke-width:2.4;}
+
+</style>
+</head>
+<body>
+
+<!-- ===================== SPLASH ===================== -->
+<section id="screen-splash" class="screen active">
+  <div class="app-shell splash">
+    <img src="icon-192.png" alt="MasjidKu" class="logo-lg" />
+    <h1 class="brand-title">Masjid<span>Ku</span></h1>
+    <p class="brand-tagline">Ruang Digital Masjid Untuk Umat</p>
+    <p class="powered-by">powered by <b>IdeA1</b></p>
+  </div>
+</section>
+
+<!-- ===================== LOGIN ===================== -->
+<section id="screen-login" class="screen">
+  <div class="app-shell">
+    <div class="login-hero">
+      <img src="icon-192.png" alt="MasjidKu" class="logo-md" />
+      <h1 class="brand-title sm">Masjid<span>Ku</span></h1>
+      <p class="brand-tagline">Ruang Digital Masjid Untuk Umat</p>
+    </div>
+    <div class="login-card">
+      <h2>Selamat Datang</h2>
+      <p class="muted">Masuk untuk melanjutkan ke MasjidKu</p>
+      <form id="login-form">
+        <input type="text" required placeholder="Email atau Nomor HP" />
+        <div class="pw-wrap">
+          <input type="password" id="pw-input" required placeholder="Kata Sandi" />
+          <button type="button" id="pw-toggle">Lihat</button>
+        </div>
+        <div class="row-between">
+          <label class="checkbox"><input type="checkbox" checked /> Ingat saya</label>
+          <button type="button" class="link-btn">Lupa kata sandi?</button>
+        </div>
+        <button type="submit" class="btn-primary">Masuk</button>
+      </form>
+      <button class="guest-btn" data-nav="beranda">Lanjutkan sebagai tamu</button>
+      <p class="muted center">Belum punya akun? <span class="link-strong">Daftar sekarang</span></p>
+      <p class="powered-by center">powered by <b>IdeA1</b></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MAIN APP (tabs) ===================== -->
+<section id="screen-app" class="screen">
+  <div class="app-shell">
+
+    <!-- Beranda -->
+    <div id="tab-beranda" class="tab active">
+      <p class="greeting">Assalamu'alaikum</p>
+      <h1 class="page-title">Selamat datang di MasjidKu</h1>
+      <p class="muted">Mari kita hadirkan masjid dalam genggaman, menguatkan iman dan kebersamaan umat.</p>
+
+      <div class="prayer-card">
+        <div class="prayer-head">
+          <span>Jadwal Sholat Hari Ini</span>
+          <button class="link-white">Lihat Semua</button>
+        </div>
+        <div class="prayer-grid">
+          <div><small>Subuh</small><b>04:35</b></div>
+          <div><small>Dzuhur</small><b>12:05</b></div>
+          <div><small>Ashar</small><b>15:24</b></div>
+          <div><small>Maghrib</small><b>17:48</b></div>
+          <div><small>Isya</small><b>19:01</b></div>
+        </div>
+      </div>
+
+      <div class="quote-card">
+        "Sesungguhnya yang memakmurkan masjid-masjid Allah hanyalah orang-orang yang beriman
+        kepada Allah dan hari akhir..."
+        <p class="quote-ref">(QS. At-Taubah: 18)</p>
+      </div>
+
+      <div class="section-head">
+        <h2>Fitur Utama</h2>
+        <button class="link-strong">Semua Fitur</button>
+      </div>
+      <div class="feature-grid">
+        <button class="feature-item" data-nav="quran"><span class="feature-icon"></span>Al-Qur'an</button>
+        <button class="feature-item" data-nav="doa"><span class="feature-icon"></span>Doa</button>
+        <button class="feature-item" data-nav="masjid"><span class="feature-icon"></span>Masjid</button>
+        <button class="feature-item" data-nav="beranda"><span class="feature-icon"></span>Jadwal Sholat</button>
+        <button class="feature-item" data-nav="masjid"><span class="feature-icon"></span>Kegiatan</button>
+      </div>
+
+      <h2 class="mt">Kegiatan Mendatang</h2>
+      <div class="empty-state">Belum ada kegiatan.</div>
+    </div>
+
+    <!-- Al-Qur'an -->
+    <div id="tab-quran" class="tab">
+      <h1 class="page-title">Al-Qur'an</h1>
+      <p class="muted">114 surat, pencarian, bookmark, dan audio murottal.</p>
+      <input class="search-input" placeholder="Cari surat atau ayat..." />
+      <div class="empty-state tall">Daftar surat akan tampil di sini setelah integrasi sumber data Al-Qur'an (Fase 4).</div>
+    </div>
+
+    <!-- Masjid -->
+    <div id="tab-masjid" class="tab">
+      <h1 class="page-title">Temukan masjid di sekitar Anda</h1>
+      <p class="muted">Setiap masjid adalah ruang ibadah, ilmu, dan kebaikan bagi umat.</p>
+      <input class="search-input" placeholder="Cari nama masjid, alamat, atau lokasi..." />
+      <div class="chip-row">
+        <span class="chip active">Semua</span>
+        <span class="chip">Terdekat</span>
+        <span class="chip">Terverifikasi</span>
+        <span class="chip">Favorit</span>
+        <span class="chip">Unggulan</span>
+      </div>
+      <div class="empty-state tall">Belum ada masjid di sekitar Anda. Direktori akan aktif setelah integrasi database (Fase 3).</div>
+      <button class="btn-primary">+ Tambahkan Masjid</button>
+    </div>
+
+    <!-- Doa -->
+    <div id="tab-doa" class="tab">
+      <h1 class="page-title">Doa</h1>
+      <p class="muted">Kumpulan doa harian lengkap dengan referensi.</p>
+      <div class="doa-grid">
+        <div class="doa-item">Doa Harian</div>
+        <div class="doa-item">Sebelum Tidur</div>
+        <div class="doa-item">Bangun Tidur</div>
+        <div class="doa-item">Makan</div>
+        <div class="doa-item">Perjalanan</div>
+        <div class="doa-item">Keluarga</div>
+        <div class="doa-item">Ibadah</div>
+        <div class="doa-item">Perlindungan</div>
+      </div>
+    </div>
+
+    <!-- Akun -->
+    <div id="tab-akun" class="tab">
+      <div class="profile-row">
+        <div class="avatar">F</div>
+        <div>
+          <p class="profile-name">Febri</p>
+          <p class="muted small">Kelola akun & preferensi Anda</p>
+        </div>
+      </div>
+      <div class="menu-card">
+        <button class="menu-item">Profil</button>
+        <button class="menu-item">Bookmark Al-Qur'an</button>
+        <button class="menu-item">Bookmark Doa</button>
+        <button class="menu-item">Masjid Favorit</button>
+        <button class="menu-item">Riwayat Belajar</button>
+        <button class="menu-item">Masjid yang Saya Kelola</button>
+        <button class="menu-item">Pengaturan</button>
+        <button class="menu-item">Privasi & Keamanan</button>
+      </div>
+      <button class="btn-outline-danger" data-nav-screen="login">Keluar</button>
+    </div>
+
+  </div>
+
+  <!-- Bottom nav (exactly 5 items) -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-nav="beranda">
+      <svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg>
+      Beranda
+    </button>
+    <button class="nav-item" data-nav="quran">
+      <svg viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5v-13ZM20 5.5c0-.8-.7-1.5-1.5-1.5H12v16h6.5a1.5 1.5 0 0 0 1.5-1.5v-13Z"/></svg>
+      Al-Qur'an
+    </button>
+    <button class="nav-item" data-nav="masjid">
+      <svg viewBox="0 0 24 24"><path d="M4 20h16M5 20v-7l7-6 7 6v7M12 20v-5"/><circle cx="12" cy="4.5" r="1"/></svg>
+      Masjid
+    </button>
+    <button class="nav-item" data-nav="doa">
+      <svg viewBox="0 0 24 24"><path d="M7 10c0-2 1-6 2-7 0 3 .5 5 2 6M17 10c0-2-1-6-2-7 0 3-.5 5-2 6M4 12c1.5 3 4.5 5 8 5s6.5-2 8-5"/></svg>
+      Doa
+    </button>
+    <button class="nav-item" data-nav="akun">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c1.2-3.8 4-5.5 7-5.5s5.8 1.7 7 5.5"/></svg>
+      Akun
+    </button>
+  </nav>
+</section>
+
+<script>
+// ===== PWA service worker =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'))
+}
+
+// ===== Supabase client (Phase 2 wiring point) =====
+// Isi kedua nilai ini setelah project Supabase dibuat.
+const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co'
+const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY'
+let supabase = null
+try {
+  if (window.supabase && SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('YOUR-PROJECT')) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  }
+} catch (e) {
+  console.warn('Supabase belum dikonfigurasi:', e)
+}
+
+// ===== Screen navigation (splash -> login -> app) =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach((el) => el.classList.remove('active'))
+  document.getElementById('screen-' + id).classList.add('active')
+}
+
+setTimeout(() => showScreen('login'), 1400)
+
+document.querySelectorAll('[data-nav-screen]').forEach((el) => {
+  el.addEventListener('click', () => showScreen(el.dataset.navScreen))
+})
+
+// ===== Login form =====
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  // TODO Phase 2: ganti dengan supabase.auth.signInWithPassword({ email, password })
+  showScreen('app')
+  setActiveTab('beranda')
+})
+
+document.getElementById('pw-toggle').addEventListener('click', () => {
+  const input = document.getElementById('pw-input')
+  const btn = document.getElementById('pw-toggle')
+  const isPw = input.type === 'password'
+  input.type = isPw ? 'text' : 'password'
+  btn.textContent = isPw ? 'Sembunyikan' : 'Lihat'
+})
+
+// ===== Bottom tab navigation (exactly 5 tabs) =====
+function setActiveTab(tab) {
+  document.querySelectorAll('.tab').forEach((el) => el.classList.remove('active'))
+  document.getElementById('tab-' + tab).classList.add('active')
+  document.querySelectorAll('.nav-item').forEach((el) => {
+    el.classList.toggle('active', el.dataset.nav === tab)
+  })
+}
+
+document.querySelectorAll('[data-nav]').forEach((el) => {
+  el.addEventListener('click', () => {
+    showScreen('app')
+    setActiveTab(el.dataset.nav)
+  })
+})
+
+</script>
+</body>
+</html>
