@@ -91,6 +91,10 @@ body{
   width:100%;background:none;border:none;text-align:center;font-size:12px;
   color:rgba(27,36,32,0.4);margin-top:16px;text-decoration:underline;cursor:pointer;
 }
+.auth-error{
+  background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:10px;
+  padding:10px 14px;font-size:12px;margin-top:16px;
+}
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
   padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
@@ -197,22 +201,24 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       <p class="brand-tagline">Ruang Digital Masjid Untuk Umat</p>
     </div>
     <div class="login-card">
-      <h2>Selamat Datang</h2>
-      <p class="muted">Masuk untuk melanjutkan ke MasjidKu</p>
+      <h2 id="auth-title">Selamat Datang</h2>
+      <p class="muted" id="auth-subtitle">Masuk untuk melanjutkan ke MasjidKu</p>
+      <p id="auth-error" class="auth-error" hidden></p>
       <form id="login-form">
-        <input type="text" required placeholder="Email atau Nomor HP" />
+        <input type="text" id="name-input" placeholder="Nama Lengkap" hidden />
+        <input type="email" id="email-input" required placeholder="Email" />
         <div class="pw-wrap">
-          <input type="password" id="pw-input" required placeholder="Kata Sandi" />
+          <input type="password" id="pw-input" required placeholder="Kata Sandi" minlength="6" />
           <button type="button" id="pw-toggle">Lihat</button>
         </div>
         <div class="row-between">
           <label class="checkbox"><input type="checkbox" checked /> Ingat saya</label>
           <button type="button" class="link-btn">Lupa kata sandi?</button>
         </div>
-        <button type="submit" class="btn-primary">Masuk</button>
+        <button type="submit" class="btn-primary" id="auth-submit">Masuk</button>
       </form>
       <button class="guest-btn" data-nav="beranda">Lanjutkan sebagai tamu</button>
-      <p class="muted center">Belum punya akun? <span class="link-strong">Daftar sekarang</span></p>
+      <p class="muted center" id="auth-toggle-line">Belum punya akun? <span class="link-strong" id="auth-toggle-link">Daftar sekarang</span></p>
       <p class="powered-by center">powered by <b>IdeA1</b></p>
     </div>
   </div>
@@ -307,10 +313,10 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
     <!-- Akun -->
     <div id="tab-akun" class="tab">
       <div class="profile-row">
-        <div class="avatar">F</div>
+        <div class="avatar" id="akun-avatar">T</div>
         <div>
-          <p class="profile-name">Febri</p>
-          <p class="muted small">Kelola akun & preferensi Anda</p>
+          <p class="profile-name" id="akun-name">Tamu</p>
+          <p class="muted small" id="akun-email">Masuk untuk menyimpan bookmark & kelola masjid</p>
         </div>
       </div>
       <div class="menu-card">
@@ -323,7 +329,7 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
         <button class="menu-item">Pengaturan</button>
         <button class="menu-item">Privasi & Keamanan</button>
       </div>
-      <button class="btn-outline-danger" data-nav-screen="login">Keluar</button>
+      <button class="btn-outline-danger" id="logout-btn">Keluar</button>
     </div>
 
   </div>
@@ -362,8 +368,8 @@ if ('serviceWorker' in navigator) {
 
 // ===== Supabase client (Phase 2 wiring point) =====
 // Isi kedua nilai ini setelah project Supabase dibuat.
-const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co'
-const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY'
+const SUPABASE_URL = 'https://kxoygpnapchpnbwvsmpg.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4b3lncG5hcGNocG5id3ZzbXBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0NDUyMzAsImV4cCI6MjEwNTAyMTIzMH0.ZAepJWi7E0azPfOHepGYs5EZlAYBAVQLZrV7ANbFsKw'
 let supabase = null
 try {
   if (window.supabase && SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('YOUR-PROJECT')) {
@@ -379,18 +385,112 @@ function showScreen(id) {
   document.getElementById('screen-' + id).classList.add('active')
 }
 
-setTimeout(() => showScreen('login'), 1400)
+// ===== Session check: kalau sudah login, lewati splash+login =====
+async function initSession() {
+  if (!supabase) {
+    setTimeout(() => showScreen('login'), 1400)
+    return
+  }
+  const { data } = await supabase.auth.getSession()
+  if (data.session) {
+    await applySessionToUI(data.session)
+    showScreen('app')
+    setActiveTab('beranda')
+  } else {
+    setTimeout(() => showScreen('login'), 1400)
+  }
+}
 
-document.querySelectorAll('[data-nav-screen]').forEach((el) => {
-  el.addEventListener('click', () => showScreen(el.dataset.navScreen))
+async function applySessionToUI(session) {
+  const user = session.user
+  document.getElementById('akun-name').textContent =
+    user.user_metadata?.full_name || user.email?.split('@')[0] || 'Pengguna'
+  document.getElementById('akun-email').textContent = user.email || ''
+  document.getElementById('akun-avatar').textContent = (user.email || 'U').charAt(0).toUpperCase()
+}
+
+function resetAkunToGuest() {
+  document.getElementById('akun-name').textContent = 'Tamu'
+  document.getElementById('akun-email').textContent = 'Masuk untuk menyimpan bookmark & kelola masjid'
+  document.getElementById('akun-avatar').textContent = 'T'
+}
+
+initSession()
+
+// ===== Auth mode toggle: Masuk <-> Daftar =====
+let authMode = 'login'
+document.getElementById('auth-toggle-link').addEventListener('click', () => {
+  authMode = authMode === 'login' ? 'register' : 'login'
+  const isRegister = authMode === 'register'
+  document.getElementById('auth-title').textContent = isRegister ? 'Buat Akun Baru' : 'Selamat Datang'
+  document.getElementById('auth-subtitle').textContent = isRegister
+    ? 'Daftar untuk mulai memakai MasjidKu'
+    : 'Masuk untuk melanjutkan ke MasjidKu'
+  document.getElementById('name-input').hidden = !isRegister
+  document.getElementById('name-input').required = isRegister
+  document.getElementById('auth-submit').textContent = isRegister ? 'Daftar' : 'Masuk'
+  document.getElementById('auth-toggle-line').firstChild.textContent = isRegister
+    ? 'Sudah punya akun? '
+    : 'Belum punya akun? '
+  document.getElementById('auth-toggle-link').textContent = isRegister ? 'Masuk di sini' : 'Daftar sekarang'
+  hideAuthError()
 })
 
-// ===== Login form =====
+function showAuthError(message) {
+  const el = document.getElementById('auth-error')
+  el.textContent = message
+  el.hidden = false
+}
+function hideAuthError() {
+  document.getElementById('auth-error').hidden = true
+}
+
+// ===== Login / Register form =====
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault()
-  // TODO Phase 2: ganti dengan supabase.auth.signInWithPassword({ email, password })
-  showScreen('app')
-  setActiveTab('beranda')
+  hideAuthError()
+
+  if (!supabase) {
+    showAuthError('Supabase belum terhubung. Coba lagi nanti.')
+    return
+  }
+
+  const email = document.getElementById('email-input').value.trim()
+  const password = document.getElementById('pw-input').value
+  const submitBtn = document.getElementById('auth-submit')
+  submitBtn.disabled = true
+  const originalLabel = submitBtn.textContent
+  submitBtn.textContent = 'Memproses...'
+
+  try {
+    if (authMode === 'register') {
+      const fullName = document.getElementById('name-input').value.trim()
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      })
+      if (error) throw error
+      if (data.session) {
+        await applySessionToUI(data.session)
+        showScreen('app')
+        setActiveTab('beranda')
+      } else {
+        showAuthError('Pendaftaran berhasil. Cek email Anda untuk verifikasi, lalu masuk.')
+      }
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      await applySessionToUI(data.session)
+      showScreen('app')
+      setActiveTab('beranda')
+    }
+  } catch (err) {
+    showAuthError(err.message || 'Terjadi kesalahan. Silakan coba lagi.')
+  } finally {
+    submitBtn.disabled = false
+    submitBtn.textContent = originalLabel
+  }
 })
 
 document.getElementById('pw-toggle').addEventListener('click', () => {
@@ -399,6 +499,13 @@ document.getElementById('pw-toggle').addEventListener('click', () => {
   const isPw = input.type === 'password'
   input.type = isPw ? 'text' : 'password'
   btn.textContent = isPw ? 'Sembunyikan' : 'Lihat'
+})
+
+// ===== Logout =====
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  if (supabase) await supabase.auth.signOut()
+  resetAkunToGuest()
+  showScreen('login')
 })
 
 // ===== Bottom tab navigation (exactly 5 tabs) =====
