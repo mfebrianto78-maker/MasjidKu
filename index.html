@@ -39,24 +39,18 @@ body{
 }
 
 /* ---- Splash ---- */
-.splash{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;padding:0 32px;
-  background:linear-gradient(180deg,var(--brand-light),var(--bg));
-}
-.logo-lg{width:96px;height:96px;border-radius:22px;margin-bottom:20px;}
-.logo-md{width:72px;height:72px;border-radius:18px;}
-.brand-title{font-size:28px;font-weight:800;color:var(--brand-dark);margin:0;}
-.brand-title.sm{font-size:22px;margin-top:12px;}
-.brand-title span{color:var(--brand);}
-.brand-tagline{font-size:13px;color:rgba(27,36,32,0.6);margin-top:6px;}
+.splash-img-shell{padding:0;overflow:hidden;}
+.splash-img{width:100%;height:100dvh;object-fit:cover;display:block;}
 .powered-by{position:absolute;bottom:40px;left:0;right:0;text-align:center;font-size:11px;color:rgba(27,36,32,0.35);}
 .powered-by.center{position:static;margin-top:28px;}
 
 /* ---- Login ---- */
 .login-hero{
-  background:linear-gradient(180deg,var(--brand-light),transparent);
-  padding:56px 32px 32px;display:flex;flex-direction:column;align-items:center;text-align:center;
+  background-image:url('login-hero-bg.jpg');
+  background-size:cover;
+  background-position:center top;
+  aspect-ratio:853/1060;
+  width:100%;
 }
 .login-card{
   background:#fff;border-radius:2rem 2rem 0 0;margin-top:-16px;padding:32px 24px;
@@ -309,25 +303,19 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 
 <!-- ===================== SPLASH ===================== -->
 <section id="screen-splash" class="screen active" onclick="showScreen('login')">
-  <div class="app-shell splash">
-    <img src="icon-192.png" alt="MasjidKu" class="logo-lg" />
-    <h1 class="brand-title">Masjid<span>Ku</span></h1>
-    <p class="brand-tagline">Ruang Digital Masjid Untuk Umat</p>
-    <p class="powered-by">powered by <b>IdeA1</b></p>
+  <div class="app-shell splash-img-shell">
+    <img src="splash-bg.jpg" alt="MasjidKu — Ruang Digital Masjid Untuk Umat" class="splash-img" />
   </div>
 </section>
 
 <!-- ===================== LOGIN ===================== -->
 <section id="screen-login" class="screen">
   <div class="app-shell">
-    <div class="login-hero">
-      <img src="icon-192.png" alt="MasjidKu" class="logo-md" />
-      <h1 class="brand-title sm">Masjid<span>Ku</span></h1>
-      <p class="brand-tagline">Ruang Digital Masjid Untuk Umat</p>
-    </div>
+    <div class="login-hero" role="img" aria-label="MasjidKu — Ruang Digital Masjid Untuk Umat"></div>
     <div class="login-card">
       <h2 id="auth-title">Selamat Datang</h2>
       <p class="muted" id="auth-subtitle">Masuk untuk melanjutkan ke MasjidKu</p>
+
       <p id="auth-error" class="auth-error" hidden></p>
       <form id="login-form">
         <input type="text" id="name-input" placeholder="Nama Lengkap" hidden />
