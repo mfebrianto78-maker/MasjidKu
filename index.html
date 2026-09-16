@@ -214,6 +214,31 @@ body{
   font-size:11px;color:#92400e;line-height:1.5;
 }
 
+.prayer-countdown{
+  text-align:center;padding:10px 0 16px;border-bottom:1px solid rgba(255,255,255,0.15);margin-bottom:14px;
+}
+.prayer-countdown small{font-size:10px;color:rgba(255,255,255,0.6);}
+.prayer-countdown p{font-size:14px;font-weight:700;margin:2px 0;}
+.prayer-countdown b{font-size:26px;letter-spacing:0.03em;}
+.hijri-date{font-size:12px;color:rgba(27,36,32,0.5);margin-top:6px;margin-bottom:0;}
+
+.waktu-full-grid{display:flex;flex-direction:column;gap:2px;}
+.waktu-full-grid .wf-row{
+  display:flex;justify-content:space-between;padding:8px 4px;font-size:13px;
+  border-bottom:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.85);
+}
+.waktu-full-grid .wf-row:last-child{border-bottom:none;}
+.waktu-full-grid .wf-row.is-next{font-weight:800;color:#fff;}
+
+.qibla-box{display:flex;flex-direction:column;align-items:center;margin-top:8px;}
+.qibla-compass{
+  width:160px;height:160px;border-radius:50%;border:3px solid var(--brand-light);
+  background:radial-gradient(circle,#fff,var(--brand-light));position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.qibla-needle{font-size:32px;transition:transform 0.2s ease;transform:rotate(0deg);}
+#qibla-degree-label{margin-top:12px;font-size:13px;font-weight:700;color:var(--brand-dark);}
+
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
   padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
@@ -349,17 +374,23 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 
       <div class="prayer-card">
         <div class="prayer-head">
-          <span>Jadwal Sholat Hari Ini</span>
-          <button class="link-white">Lihat Semua</button>
+          <span id="prayer-location-label">Jadwal Sholat Hari Ini</span>
+          <button class="link-white" id="btn-lihat-semua-jadwal">Lihat Semua</button>
         </div>
-        <div class="prayer-grid">
-          <div><small>Subuh</small><b>04:35</b></div>
-          <div><small>Dzuhur</small><b>12:05</b></div>
-          <div><small>Ashar</small><b>15:24</b></div>
-          <div><small>Maghrib</small><b>17:48</b></div>
-          <div><small>Isya</small><b>19:01</b></div>
+        <div class="prayer-countdown" id="prayer-countdown" hidden>
+          <small>Menuju</small>
+          <p id="prayer-next-name">-</p>
+          <b id="prayer-next-countdown">--:--:--</b>
+        </div>
+        <div class="prayer-grid" id="prayer-grid">
+          <div><small>Subuh</small><b>--:--</b></div>
+          <div><small>Dzuhur</small><b>--:--</b></div>
+          <div><small>Ashar</small><b>--:--</b></div>
+          <div><small>Maghrib</small><b>--:--</b></div>
+          <div><small>Isya</small><b>--:--</b></div>
         </div>
       </div>
+      <p class="hijri-date" id="hijri-date-label"></p>
 
       <div class="quote-card">
         "Sesungguhnya yang memakmurkan masjid-masjid Allah hanyalah orang-orang yang beriman
@@ -375,7 +406,7 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
         <button class="feature-item" data-nav="quran"><span class="feature-icon"></span>Al-Qur'an</button>
         <button class="feature-item" data-nav="doa"><span class="feature-icon"></span>Doa</button>
         <button class="feature-item" data-nav="masjid"><span class="feature-icon"></span>Masjid</button>
-        <button class="feature-item" data-nav="beranda"><span class="feature-icon"></span>Jadwal Sholat</button>
+        <button class="feature-item" id="btn-open-waktu-grid"><span class="feature-icon"></span>Jadwal Sholat</button>
         <button class="feature-item" data-nav="masjid"><span class="feature-icon"></span>Kegiatan</button>
       </div>
 
@@ -529,6 +560,46 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       Akun
     </button>
   </nav>
+</section>
+
+<!-- ===================== WAKTU & KIBLAT (standalone screen) ===================== -->
+<section id="screen-waktu" class="screen">
+  <div class="app-shell" style="padding:40px 20px 24px;">
+    <button class="back-btn" id="waktu-back-to-app">‹ Kembali</button>
+    <h1 class="page-title">Waktu & Kiblat</h1>
+    <p class="muted" id="waktu-location-label">Mendeteksi lokasi Anda...</p>
+
+    <div class="prayer-card" style="margin-top:16px;">
+      <div class="prayer-head">
+        <span>Jadwal Sholat Hari Ini</span>
+        <span id="waktu-date-label" style="font-size:11px;color:rgba(255,255,255,0.7);"></span>
+      </div>
+      <div class="prayer-countdown" id="waktu-countdown" hidden>
+        <small>Menuju</small>
+        <p id="waktu-next-name">-</p>
+        <b id="waktu-next-countdown">--:--:--</b>
+      </div>
+      <div class="waktu-full-grid" id="waktu-full-grid">
+        <div class="empty-state">Memuat jadwal...</div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Kalender Hijriyah</h3>
+      <p id="waktu-hijri-full">Memuat tanggal Hijriyah...</p>
+    </div>
+
+    <div class="detail-section">
+      <h3>Arah Kiblat</h3>
+      <div class="qibla-box">
+        <div class="qibla-compass" id="qibla-compass">
+          <div class="qibla-needle" id="qibla-needle">🕋</div>
+        </div>
+        <p id="qibla-degree-label">Menghitung arah kiblat...</p>
+        <button class="btn-secondary" id="btn-enable-compass" style="margin-top:10px;">Aktifkan Kompas Live</button>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ===================== BELAJAR ISLAM (standalone screen) ===================== -->
@@ -1347,6 +1418,206 @@ document.querySelectorAll('[data-nav]').forEach((el) => {
 // ============================================================
 // ===== Phase 4: Belajar Islam (standalone screen) ============
 // ============================================================
+// ============================================================
+// ===== Phase 5: Jadwal Sholat, Kalender Hijriyah, Qibla ======
+// ============================================================
+const ALADHAN_API = 'https://api.aladhan.com/v1'
+const KARTASURA_FALLBACK = { lat: -7.5567, lng: 110.7333, label: 'Kartasura, Sukoharjo (default)' }
+let waktuCoords = null
+let todayTimings = null
+let todayHijri = null
+let countdownInterval = null
+
+function pad2(n) { return String(n).padStart(2, '0') }
+function todayDMY() {
+  const d = new Date()
+  return `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}`
+}
+
+async function resolveWaktuCoords() {
+  if (waktuCoords) return waktuCoords
+  const geo = await maybeRequestLocation()
+  waktuCoords = geo || KARTASURA_FALLBACK
+  return waktuCoords
+}
+
+async function fetchPrayerData() {
+  const coords = await resolveWaktuCoords()
+  try {
+    const res = await fetch(
+      `${ALADHAN_API}/timings/${todayDMY()}?latitude=${coords.lat}&longitude=${coords.lng}&method=20`
+    )
+    const json = await res.json()
+    todayTimings = json.data.timings
+    todayHijri = json.data.date.hijri
+    return true
+  } catch (err) {
+    return false
+  }
+}
+
+const PRAYER_ORDER = [
+  ['Subuh', 'Fajr'], ['Dzuhur', 'Dhuhr'], ['Ashar', 'Asr'], ['Maghrib', 'Maghrib'], ['Isya', 'Isha'],
+]
+
+function getNextPrayer() {
+  if (!todayTimings) return null
+  const now = new Date()
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+  for (const [label, key] of PRAYER_ORDER) {
+    const [h, m] = todayTimings[key].split(':').map(Number)
+    if (h * 60 + m > nowMinutes) return { label, key, h, m }
+  }
+  return null // sudah lewat Isya, next adalah Subuh besok
+}
+
+function updateCountdownDisplays() {
+  if (!todayTimings) return
+  const next = getNextPrayer()
+  const now = new Date()
+  let targetLabel, diffMs
+
+  if (next) {
+    targetLabel = next.label
+    const target = new Date(now)
+    target.setHours(next.h, next.m, 0, 0)
+    diffMs = target - now
+  } else {
+    targetLabel = 'Subuh'
+    const [h, m] = todayTimings['Fajr'].split(':').map(Number)
+    const target = new Date(now)
+    target.setDate(target.getDate() + 1)
+    target.setHours(h, m, 0, 0)
+    diffMs = target - now
+  }
+
+  const totalSec = Math.max(0, Math.floor(diffMs / 1000))
+  const hh = pad2(Math.floor(totalSec / 3600))
+  const mm = pad2(Math.floor((totalSec % 3600) / 60))
+  const ss = pad2(totalSec % 60)
+  const countdownStr = `${hh}:${mm}:${ss}`
+
+  ;['prayer', 'waktu'].forEach((prefix) => {
+    const wrap = document.getElementById(`${prefix}-countdown`)
+    const nameEl = document.getElementById(`${prefix}-next-name`)
+    const cdEl = document.getElementById(`${prefix}-next-countdown`)
+    if (wrap) { wrap.hidden = false }
+    if (nameEl) nameEl.textContent = targetLabel
+    if (cdEl) cdEl.textContent = countdownStr
+  })
+}
+
+function renderPrayerGrids() {
+  if (!todayTimings) return
+  const next = getNextPrayer()
+
+  const miniGrid = document.getElementById('prayer-grid')
+  miniGrid.innerHTML = PRAYER_ORDER.map(
+    ([label, key]) => `<div><small>${label}</small><b>${todayTimings[key]}</b></div>`
+  ).join('')
+
+  const fullGrid = document.getElementById('waktu-full-grid')
+  if (fullGrid) {
+    const rows = [['Imsak', 'Imsak'], ...PRAYER_ORDER]
+    fullGrid.innerHTML = rows
+      .map(([label, key]) => {
+        const isNext = next && label === next.label
+        return `<div class="wf-row ${isNext ? 'is-next' : ''}"><span>${label}</span><span>${todayTimings[key] || '-'}</span></div>`
+      })
+      .join('')
+  }
+}
+
+function renderHijriDate() {
+  if (!todayHijri) return
+  const short = `${todayHijri.day} ${todayHijri.month.en} ${todayHijri.year} H`
+  const full = `${todayHijri.weekday.en}, ${todayHijri.day} ${todayHijri.month.en} ${todayHijri.year} H`
+  const beranda = document.getElementById('hijri-date-label')
+  if (beranda) beranda.textContent = short
+  const waktuFull = document.getElementById('waktu-hijri-full')
+  if (waktuFull) waktuFull.textContent = full
+}
+
+async function loadPrayerAndHijri() {
+  const ok = await fetchPrayerData()
+  const locLabel = waktuCoords === KARTASURA_FALLBACK ? KARTASURA_FALLBACK.label : 'Lokasi Anda saat ini'
+  const locEl1 = document.getElementById('prayer-location-label')
+  const locEl2 = document.getElementById('waktu-location-label')
+  if (locEl1) locEl1.textContent = 'Jadwal Sholat Hari Ini'
+  if (locEl2) locEl2.textContent = ok ? locLabel : 'Gagal memuat lokasi, memakai data Kartasura'
+  const dateEl = document.getElementById('waktu-date-label')
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+
+  if (!ok) return
+  renderPrayerGrids()
+  renderHijriDate()
+  updateCountdownDisplays()
+  if (countdownInterval) clearInterval(countdownInterval)
+  countdownInterval = setInterval(() => {
+    updateCountdownDisplays()
+    renderPrayerGrids() // refresh highlight kalau next prayer berganti
+  }, 1000)
+
+  const uid = await getCurrentUserId()
+  if (uid && supabase) {
+    supabase.from('prayer_settings').upsert(
+      { user_id: uid, latitude: waktuCoords.lat, longitude: waktuCoords.lng, calculation_method: 'kemenag' },
+      { onConflict: 'user_id' }
+    ).then(() => {})
+  }
+}
+
+async function loadQibla() {
+  const coords = await resolveWaktuCoords()
+  try {
+    const res = await fetch(`${ALADHAN_API}/qibla/${coords.lat}/${coords.lng}`)
+    const json = await res.json()
+    const direction = json.data.direction
+    document.getElementById('qibla-degree-label').textContent = `${direction.toFixed(1)}° dari Utara`
+    document.getElementById('qibla-needle').style.transform = `rotate(${direction}deg)`
+    return direction
+  } catch (err) {
+    document.getElementById('qibla-degree-label').textContent = 'Gagal menghitung arah kiblat.'
+    return null
+  }
+}
+
+let qiblaBaseDirection = null
+document.getElementById('btn-enable-compass').addEventListener('click', async () => {
+  if (qiblaBaseDirection == null) qiblaBaseDirection = await loadQibla()
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    try {
+      const perm = await DeviceOrientationEvent.requestPermission()
+      if (perm !== 'granted') return
+    } catch (e) { return }
+  }
+  window.addEventListener('deviceorientationabsolute', handleOrientation, true)
+  window.addEventListener('deviceorientation', handleOrientation, true)
+  document.getElementById('btn-enable-compass').textContent = 'Kompas Aktif ✓'
+})
+
+function handleOrientation(e) {
+  if (qiblaBaseDirection == null) return
+  const heading = e.webkitCompassHeading != null ? e.webkitCompassHeading : 360 - (e.alpha || 0)
+  const relative = (qiblaBaseDirection - heading + 360) % 360
+  document.getElementById('qibla-needle').style.transform = `rotate(${relative}deg)`
+}
+
+async function openWaktuScreen() {
+  showScreen('waktu')
+  document.getElementById('waktu-full-grid').innerHTML = '<div class="empty-state">Memuat jadwal...</div>'
+  document.getElementById('qibla-degree-label').textContent = 'Menghitung arah kiblat...'
+  await loadPrayerAndHijri()
+  await loadQibla()
+}
+
+document.getElementById('btn-open-waktu-grid').addEventListener('click', openWaktuScreen)
+document.getElementById('btn-lihat-semua-jadwal').addEventListener('click', openWaktuScreen)
+document.getElementById('waktu-back-to-app').addEventListener('click', () => showScreen('app'))
+
+// Muat jadwal sholat mini di Beranda begitu app dibuka
+loadPrayerAndHijri()
+
 document.getElementById('btn-open-belajar').addEventListener('click', () => {
   showScreen('belajar')
   document.getElementById('belajar-view-list').hidden = true
