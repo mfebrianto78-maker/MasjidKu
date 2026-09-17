@@ -249,6 +249,17 @@ body{
 .tab{display:none;padding:40px 20px 24px;}
 .tab.active{display:block;}
 .greeting{color:rgba(27,36,32,0.6);font-size:14px;margin:0;}
+.beranda-header{
+  position:relative;overflow:hidden;
+  margin:-40px -20px 20px;padding:40px 20px 24px;
+  background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+  border-radius:0 0 28px 28px;color:#fff;
+}
+.beranda-header .greeting{color:rgba(255,255,255,0.75);}
+.beranda-header .page-title{color:#fff;}
+.beranda-header .muted{color:rgba(255,255,255,0.7);}
+.beranda-pattern{position:absolute;top:0;right:0;width:60%;height:100%;pointer-events:none;}
+.beranda-header > *{position:relative;z-index:1;}
 .page-title{font-size:20px;font-weight:800;color:var(--brand-dark);margin:4px 0 8px;}
 
 .prayer-card{
@@ -258,6 +269,7 @@ body{
 .prayer-head{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.7);}
 .prayer-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center;margin-top:16px;}
 .prayer-grid small{display:block;font-size:11px;color:rgba(255,255,255,0.7);}
+.prayer-grid .prayer-emoji{display:block;font-size:14px;margin-bottom:2px;}
 .prayer-grid b{font-size:14px;}
 
 .quote-card{
@@ -274,8 +286,14 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 .feature-item{
   background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;
 }
-.feature-icon{width:44px;height:44px;border-radius:14px;background:var(--brand-light);}
-.feature-item span.feature-icon{display:block;}
+.feature-icon{
+  width:44px;height:44px;border-radius:14px;background:var(--brand-light);
+  display:flex;align-items:center;justify-content:center;
+}
+.feature-icon svg{
+  width:22px;height:22px;fill:none;stroke:var(--brand-dark);stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;
+}
 .feature-item{font-size:10px;color:rgba(27,36,32,0.7);line-height:1.2;text-align:center;}
 
 .empty-state{
@@ -368,9 +386,12 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 
     <!-- Beranda -->
     <div id="tab-beranda" class="tab active">
-      <p class="greeting">Assalamu'alaikum</p>
-      <h1 class="page-title">Selamat datang di MasjidKu</h1>
-      <p class="muted">Mari kita hadirkan masjid dalam genggaman, menguatkan iman dan kebersamaan umat.</p>
+      <div class="beranda-header">
+        <svg class="beranda-pattern" viewBox="0 0 200 140" preserveAspectRatio="xMaxYMid slice"><g opacity="0.35" fill="none" stroke="#fff" stroke-width="1.4"><circle cx="170" cy="30" r="26"/><circle cx="170" cy="30" r="16"/><path d="M170 4v52M144 30h52M152 12l36 36M188 12l-36 36"/><circle cx="130" cy="90" r="18"/><path d="M130 72v36M112 90h36"/></g></svg>
+        <p class="greeting">Assalamu'alaikum</p>
+        <h1 class="page-title">Selamat datang di MasjidKu</h1>
+        <p class="muted">Mari kita hadirkan masjid dalam genggaman, menguatkan iman dan kebersamaan umat.</p>
+      </div>
 
       <div class="prayer-card">
         <div class="prayer-head">
@@ -403,11 +424,26 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
         <button class="link-strong">Semua Fitur</button>
       </div>
       <div class="feature-grid">
-        <button class="feature-item" data-nav="quran"><span class="feature-icon"></span>Al-Qur'an</button>
-        <button class="feature-item" data-nav="doa"><span class="feature-icon"></span>Doa</button>
-        <button class="feature-item" data-nav="masjid"><span class="feature-icon"></span>Masjid</button>
-        <button class="feature-item" id="btn-open-waktu-grid"><span class="feature-icon"></span>Jadwal Sholat</button>
-        <button class="feature-item" data-nav="masjid"><span class="feature-icon"></span>Kegiatan</button>
+        <button class="feature-item" data-nav="quran">
+          <span class="feature-icon"><svg viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5v-13ZM20 5.5c0-.8-.7-1.5-1.5-1.5H12v16h6.5a1.5 1.5 0 0 0 1.5-1.5v-13Z"/></svg></span>
+          Al-Qur'an
+        </button>
+        <button class="feature-item" data-nav="doa">
+          <span class="feature-icon"><svg viewBox="0 0 24 24"><path d="M7 10c0-2 1-6 2-7 0 3 .5 5 2 6M17 10c0-2-1-6-2-7 0 3-.5 5-2 6M4 12c1.5 3 4.5 5 8 5s6.5-2 8-5"/></svg></span>
+          Doa
+        </button>
+        <button class="feature-item" data-nav="masjid">
+          <span class="feature-icon"><svg viewBox="0 0 24 24"><path d="M4 20h16M5 20v-7l7-6 7 6v7M12 20v-5"/><circle cx="12" cy="4.5" r="1"/></svg></span>
+          Masjid
+        </button>
+        <button class="feature-item" id="btn-open-waktu-grid">
+          <span class="feature-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span>
+          Jadwal Sholat
+        </button>
+        <button class="feature-item" data-nav="masjid">
+          <span class="feature-icon"><svg viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 9.5h16M8 3v4M16 3v4"/></svg></span>
+          Kegiatan
+        </button>
       </div>
 
       <button class="belajar-card" id="btn-open-belajar">
@@ -1507,13 +1543,15 @@ function updateCountdownDisplays() {
   })
 }
 
+const PRAYER_EMOJI = { Subuh: '🌙', Dzuhur: '☀️', Ashar: '⛅', Maghrib: '🌇', Isya: '🌙' }
+
 function renderPrayerGrids() {
   if (!todayTimings) return
   const next = getNextPrayer()
 
   const miniGrid = document.getElementById('prayer-grid')
   miniGrid.innerHTML = PRAYER_ORDER.map(
-    ([label, key]) => `<div><small>${label}</small><b>${todayTimings[key]}</b></div>`
+    ([label, key]) => `<div><span class="prayer-emoji">${PRAYER_EMOJI[label] || ''}</span><small>${label}</small><b>${todayTimings[key]}</b></div>`
   ).join('')
 
   const fullGrid = document.getElementById('waktu-full-grid')
