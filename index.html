@@ -1582,6 +1582,15 @@ document.getElementById('quran-search').addEventListener('input', (e) => {
   renderSuratList(allSurat.filter((s) => s.namaLatin.toLowerCase().includes(kw) || (s.arti || '').toLowerCase().includes(kw)))
 })
 
+const RECITER_MAP = {
+  '01': 'Abdullah Al-Juhany',
+  '02': 'Abdul Muhsin Al-Qasim',
+  '03': 'Abdurrahman as-Sudais',
+  '04': 'Ibrahim Al-Dossari',
+  '05': 'Misyari Rasyid Al-Afasy',
+}
+let selectedReciter = '05' // kualitas rekaman paling jernih & populer, dipakai sebagai default
+
 async function openSuratDetail(nomor) {
   document.getElementById('quran-view-list').hidden = true
   document.getElementById('quran-view-detail').hidden = false
@@ -1596,15 +1605,23 @@ async function openSuratDetail(nomor) {
     const res = await fetch(`${QURAN_API}/surat/${nomor}`)
     const json = await res.json()
     const s = json.data
+    const reciterOptions = Object.entries(RECITER_MAP)
+      .map(([id, name]) => `<option value="${id}" ${id === selectedReciter ? 'selected' : ''}>${name}</option>`)
+      .join('')
     headerEl.innerHTML = `
       <h1 class="page-title">${escapeHtml(s.namaLatin)} <span class="surat-name-arab">${s.nama}</span></h1>
       <p class="muted">${escapeHtml(s.tempatTurun || '')} · ${s.jumlahAyat} ayat · ${escapeHtml(s.arti || '')}</p>
+      <select id="reciter-select" class="search-input" style="margin-top:10px;">${reciterOptions}</select>
     `
+    document.getElementById('reciter-select').addEventListener('change', (e) => {
+      selectedReciter = e.target.value
+      openSuratDetail(nomor)
+    })
     ayatEl.innerHTML = ''
     ;(s.ayat || []).forEach((a) => {
       const key = `${nomor}:${a.nomorAyat}`
       const isBookmarked = quranBookmarkIds.has(key)
-      const audioUrl = a.audio ? Object.values(a.audio)[0] : null
+      const audioUrl = a.audio ? (a.audio[selectedReciter] || Object.values(a.audio)[0]) : null
       const card = document.createElement('div')
       card.className = 'ayat-card'
       card.innerHTML = `
