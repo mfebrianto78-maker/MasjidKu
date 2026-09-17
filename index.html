@@ -287,6 +287,37 @@ body{
   border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;font-size:13px;
 }
 
+.mini-player{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+  background:var(--brand-dark);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;
+  align-items:center;z-index:20;box-shadow:0 -4px 16px rgba(0,0,0,0.15);
+}
+.mini-player-info b{font-size:13px;display:block;}
+.mini-player-info small{font-size:11px;color:rgba(255,255,255,0.6);}
+.mini-player-controls{display:flex;gap:12px;}
+.mini-player-controls button{
+  background:rgba(255,255,255,0.15);border:none;color:#fff;width:36px;height:36px;
+  border-radius:50%;font-size:14px;
+}
+.btn-full-play{
+  width:100%;margin-top:12px;background:var(--brand);color:#fff;border:none;border-radius:12px;
+  padding:12px;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+
+.ceramah-card{
+  display:flex;gap:12px;background:#fff;border:1px solid var(--border);border-radius:16px;
+  padding:12px;margin-bottom:10px;cursor:pointer;text-align:left;width:100%;align-items:center;
+}
+.ceramah-thumb{
+  width:88px;height:64px;border-radius:10px;background:var(--brand-dark);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;overflow:hidden;
+}
+.ceramah-thumb img{width:100%;height:100%;object-fit:cover;}
+.ceramah-info b{font-size:13px;display:block;}
+.ceramah-info small{font-size:11px;color:rgba(27,36,32,0.5);}
+.video-embed-wrap{position:relative;width:100%;padding-top:56.25%;border-radius:16px;overflow:hidden;background:#000;}
+.video-embed-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
   padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
@@ -521,7 +552,17 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       <div id="quran-view-detail" hidden>
         <button class="back-btn" id="quran-detail-back">‹ Kembali</button>
         <div id="quran-detail-header"></div>
-        <div id="quran-ayat-list"></div>
+        <div id="quran-ayat-list" style="padding-bottom:70px;"></div>
+      </div>
+      <div id="quran-mini-player" class="mini-player" hidden>
+        <div class="mini-player-info">
+          <b id="mini-player-title">-</b>
+          <small id="mini-player-reciter"></small>
+        </div>
+        <div class="mini-player-controls">
+          <button id="mini-player-toggle" aria-label="Putar/Jeda">▶</button>
+          <button id="mini-player-stop" aria-label="Berhenti">■</button>
+        </div>
       </div>
     </div>
 
@@ -759,6 +800,15 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       <div class="doa-grid" id="belajar-grid">
         <div class="empty-state">Memuat kategori...</div>
       </div>
+
+      <button class="belajar-card" id="btn-open-ceramah" style="margin-top:16px;">
+        <span class="belajar-card-icon">🎥</span>
+        <span class="belajar-card-text">
+          <b>Ceramah & Kajian Video</b>
+          <small>Tausiyah pilihan dari ustad/da'i</small>
+        </span>
+        <span class="belajar-card-arrow">›</span>
+      </button>
     </div>
     <div id="belajar-view-list" style="padding:40px 20px 24px;" hidden>
       <button class="back-btn" id="belajar-list-back">‹ Kembali</button>
@@ -768,6 +818,15 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
     <div id="belajar-view-article" style="padding:40px 20px 24px;" hidden>
       <button class="back-btn" id="belajar-article-back">‹ Kembali</button>
       <div id="belajar-article-content"></div>
+    </div>
+    <div id="belajar-view-ceramah-list" style="padding:40px 20px 24px;" hidden>
+      <button class="back-btn" id="ceramah-list-back">‹ Kembali</button>
+      <h1 class="page-title">Ceramah & Kajian Video</h1>
+      <div id="ceramah-list-content"></div>
+    </div>
+    <div id="belajar-view-ceramah-player" style="padding:40px 20px 24px;" hidden>
+      <button class="back-btn" id="ceramah-player-back">‹ Kembali</button>
+      <div id="ceramah-player-content"></div>
     </div>
   </div>
 </section>
@@ -1611,11 +1670,18 @@ async function openSuratDetail(nomor) {
     headerEl.innerHTML = `
       <h1 class="page-title">${escapeHtml(s.namaLatin)} <span class="surat-name-arab">${s.nama}</span></h1>
       <p class="muted">${escapeHtml(s.tempatTurun || '')} · ${s.jumlahAyat} ayat · ${escapeHtml(s.arti || '')}</p>
-      <select id="reciter-select" class="search-input" style="margin-top:10px;">${reciterOptions}</select>
+      <label class="muted" style="font-size:11px;display:block;margin-top:12px;">Pilih Qari (Pembaca)</label>
+      <select id="reciter-select" class="search-input" style="margin-top:4px;">${reciterOptions}</select>
+      <button class="btn-full-play" id="btn-play-full-surah">▶ Putar Surat Penuh</button>
     `
     document.getElementById('reciter-select').addEventListener('change', (e) => {
       selectedReciter = e.target.value
       openSuratDetail(nomor)
+    })
+    document.getElementById('btn-play-full-surah').addEventListener('click', () => {
+      const fullUrl = s.audioFull ? s.audioFull[selectedReciter] : null
+      if (!fullUrl) { alert('Audio surat penuh tidak tersedia untuk qari ini.'); return }
+      playInMiniPlayer(fullUrl, s.namaLatin, RECITER_MAP[selectedReciter])
     })
     ayatEl.innerHTML = ''
     ;(s.ayat || []).forEach((a) => {
@@ -1642,6 +1708,7 @@ async function openSuratDetail(nomor) {
     ayatEl.querySelectorAll('.ayat-play').forEach((btn) => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('audio.quran-audio').forEach((el) => el.remove())
+        if (miniPlayerAudio) stopMiniPlayer()
         const audio = new Audio(btn.dataset.audio)
         audio.className = 'quran-audio'
         audio.play()
@@ -1675,9 +1742,49 @@ async function openSuratDetail(nomor) {
 
 document.getElementById('quran-detail-back').addEventListener('click', () => {
   document.querySelectorAll('audio.quran-audio').forEach((el) => el.remove())
+  stopMiniPlayer()
   document.getElementById('quran-view-detail').hidden = true
   document.getElementById('quran-view-list').hidden = false
 })
+
+// ---- Mini player untuk putar surat penuh ----
+let miniPlayerAudio = null
+
+function playInMiniPlayer(url, title, reciterName) {
+  document.querySelectorAll('audio.quran-audio').forEach((el) => el.remove()) // hentikan audio per-ayat kalau ada
+  if (miniPlayerAudio) miniPlayerAudio.pause()
+  miniPlayerAudio = new Audio(url)
+  miniPlayerAudio.play()
+  document.getElementById('mini-player-title').textContent = title
+  document.getElementById('mini-player-reciter').textContent = reciterName
+  document.getElementById('mini-player-toggle').textContent = '⏸'
+  document.getElementById('quran-mini-player').hidden = false
+
+  miniPlayerAudio.addEventListener('ended', () => {
+    document.getElementById('mini-player-toggle').textContent = '▶'
+  })
+}
+
+function stopMiniPlayer() {
+  if (miniPlayerAudio) {
+    miniPlayerAudio.pause()
+    miniPlayerAudio.currentTime = 0
+  }
+  document.getElementById('quran-mini-player').hidden = true
+}
+
+document.getElementById('mini-player-toggle').addEventListener('click', () => {
+  if (!miniPlayerAudio) return
+  if (miniPlayerAudio.paused) {
+    miniPlayerAudio.play()
+    document.getElementById('mini-player-toggle').textContent = '⏸'
+  } else {
+    miniPlayerAudio.pause()
+    document.getElementById('mini-player-toggle').textContent = '▶'
+  }
+})
+
+document.getElementById('mini-player-stop').addEventListener('click', stopMiniPlayer)
 
 // ============================================================
 // ===== Phase 4: Doa (Supabase) ===============================
@@ -2080,6 +2187,65 @@ document.getElementById('belajar-article-back').addEventListener('click', () => 
   document.getElementById('belajar-view-article').hidden = true
   document.getElementById('belajar-view-list').hidden = false
 })
+
+// ============================================================
+// ===== Ceramah & Kajian Video (embed YouTube) ================
+// ============================================================
+document.getElementById('btn-open-ceramah').addEventListener('click', () => {
+  document.getElementById('belajar-view-categories').hidden = true
+  document.getElementById('belajar-view-ceramah-list').hidden = false
+  loadCeramahList()
+})
+
+document.getElementById('ceramah-list-back').addEventListener('click', () => {
+  document.getElementById('belajar-view-ceramah-list').hidden = true
+  document.getElementById('belajar-view-categories').hidden = false
+})
+
+document.getElementById('ceramah-player-back').addEventListener('click', () => {
+  document.getElementById('ceramah-player-content').innerHTML = '' // hentikan video
+  document.getElementById('belajar-view-ceramah-player').hidden = true
+  document.getElementById('belajar-view-ceramah-list').hidden = false
+})
+
+async function loadCeramahList() {
+  const contentEl = document.getElementById('ceramah-list-content')
+  contentEl.innerHTML = '<div class="empty-state">Memuat video...</div>'
+  const { data, error } = await supabase
+    .from('ceramah_videos')
+    .select('*')
+    .order('sort_order', { ascending: true })
+  if (error) { contentEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`; return }
+  if (!data.length) {
+    contentEl.innerHTML = '<div class="empty-state tall">Belum ada video ceramah. Admin bisa menambahkannya lewat Supabase dashboard (tabel ceramah_videos).</div>'
+    return
+  }
+  contentEl.innerHTML = data.map((v) => `
+    <div class="ceramah-card" data-id="${v.id}">
+      <div class="ceramah-thumb"><img src="https://i.ytimg.com/vi/${v.youtube_video_id}/mqdefault.jpg" alt="${escapeHtml(v.title)}" loading="lazy" /></div>
+      <div class="ceramah-info">
+        <b>${escapeHtml(v.title)}</b>
+        <small>${escapeHtml(v.ustad_name)}</small>
+      </div>
+    </div>
+  `).join('')
+  contentEl.querySelectorAll('.ceramah-card').forEach((el, i) => {
+    el.addEventListener('click', () => openCeramahPlayer(data[i]))
+  })
+}
+
+function openCeramahPlayer(video) {
+  document.getElementById('belajar-view-ceramah-list').hidden = true
+  document.getElementById('belajar-view-ceramah-player').hidden = false
+  document.getElementById('ceramah-player-content').innerHTML = `
+    <div class="video-embed-wrap">
+      <iframe src="https://www.youtube.com/embed/${video.youtube_video_id}?autoplay=1" title="${escapeHtml(video.title)}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+    <h1 class="page-title" style="margin-top:16px;">${escapeHtml(video.title)}</h1>
+    <p class="muted">${escapeHtml(video.ustad_name)}</p>
+    ${video.description ? `<p class="ayat-translation" style="margin-top:10px;">${escapeHtml(video.description)}</p>` : ''}
+  `
+}
 
 // ============================================================
 // ===== Akun: Profil, Bookmark, Favorit, Riwayat, Kelola, dll ==
