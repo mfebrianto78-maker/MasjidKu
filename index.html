@@ -239,6 +239,38 @@ body{
 .qibla-needle{font-size:32px;transition:transform 0.2s ease;transform:rotate(0deg);}
 #qibla-degree-label{margin-top:12px;font-size:13px;font-weight:700;color:var(--brand-dark);}
 
+.manage-tabs{display:flex;gap:8px;margin:16px 0;}
+.manage-tab{
+  flex:1;padding:10px;border-radius:12px;border:1px solid var(--border);background:#fff;
+  font-size:12px;font-weight:600;color:rgba(27,36,32,0.5);
+}
+.manage-tab.active{background:var(--brand);color:#fff;border-color:transparent;}
+.manage-panel[hidden]{display:none;}
+.manage-form{
+  background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px;
+  display:flex;flex-direction:column;gap:10px;margin-bottom:16px;
+}
+.manage-form input, .manage-form textarea, .manage-form select{
+  border-radius:10px;border:1px solid var(--border);background:rgba(27,36,32,0.03);
+  padding:11px 14px;font-size:13px;outline:none;font-family:inherit;width:100%;
+}
+.manage-list{display:flex;flex-direction:column;gap:8px;}
+.manage-item{
+  background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:8px;
+}
+.manage-item-body b{font-size:13px;display:block;}
+.manage-item-body small{font-size:11px;color:rgba(27,36,32,0.5);}
+.manage-item-body p{font-size:12px;color:rgba(27,36,32,0.6);margin:4px 0 0;}
+.manage-delete-btn{background:none;border:none;color:#ef4444;font-size:12px;font-weight:700;flex-shrink:0;}
+.galeri-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
+.galeri-item{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:1;background:var(--brand-light);}
+.galeri-item img{width:100%;height:100%;object-fit:cover;}
+.galeri-item-delete{
+  position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.55);color:#fff;border:none;
+  width:22px;height:22px;border-radius:50%;font-size:12px;line-height:1;
+}
+
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
   padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
@@ -530,6 +562,59 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
           </label>
           <button type="submit" class="btn-primary">Kirim untuk Verifikasi</button>
         </form>
+      </div>
+
+      <!-- Manage (Kelola) masjid — for owner/manager/editor -->
+      <div id="masjid-view-manage" hidden>
+        <button class="back-btn" id="masjid-manage-back">‹ Kembali</button>
+        <h1 class="page-title" id="manage-masjid-title">Kelola Masjid</h1>
+
+        <div class="manage-tabs" id="manage-tabs">
+          <button class="manage-tab active" data-mtab="kegiatan">Kegiatan</button>
+          <button class="manage-tab" data-mtab="pengumuman">Pengumuman</button>
+          <button class="manage-tab" data-mtab="galeri">Galeri</button>
+        </div>
+
+        <!-- Kegiatan -->
+        <div id="manage-panel-kegiatan" class="manage-panel">
+          <form id="form-add-kegiatan" class="manage-form">
+            <input required placeholder="Judul kegiatan" id="mk-title" />
+            <div class="form-row">
+              <select id="mk-type">
+                <option value="kegiatan">Kegiatan</option>
+                <option value="kajian">Kajian</option>
+              </select>
+              <input required type="date" id="mk-date" />
+            </div>
+            <div class="form-row">
+              <input type="time" id="mk-time" placeholder="Jam" />
+              <input placeholder="Lokasi" id="mk-location" />
+            </div>
+            <input placeholder="Pembicara (opsional)" id="mk-speaker" />
+            <textarea placeholder="Deskripsi" id="mk-desc" rows="2"></textarea>
+            <button type="submit" class="btn-primary">+ Tambah Kegiatan</button>
+          </form>
+          <div id="manage-kegiatan-list" class="manage-list"></div>
+        </div>
+
+        <!-- Pengumuman -->
+        <div id="manage-panel-pengumuman" class="manage-panel" hidden>
+          <form id="form-add-pengumuman" class="manage-form">
+            <input required placeholder="Judul pengumuman" id="mp-title" />
+            <textarea required placeholder="Isi pengumuman" id="mp-content" rows="3"></textarea>
+            <button type="submit" class="btn-primary">+ Tambah Pengumuman</button>
+          </form>
+          <div id="manage-pengumuman-list" class="manage-list"></div>
+        </div>
+
+        <!-- Galeri -->
+        <div id="manage-panel-galeri" class="manage-panel" hidden>
+          <label class="photo-picker" id="galeri-picker-label">
+            <span id="galeri-picker-text">📷 Tambah Foto ke Galeri</span>
+            <input type="file" id="mg-photo" accept="image/png,image/jpeg,image/webp" hidden />
+          </label>
+          <div id="manage-galeri-grid" class="galeri-grid"></div>
+        </div>
       </div>
 
     </div>
@@ -1092,7 +1177,7 @@ async function openMasjidDetail(masjidId) {
       <button class="btn-secondary ${isFavorited ? 'is-active' : ''}" id="btn-fav-toggle">
         ${isFavorited ? '♥ Favorit' : '♡ Favoritkan'}
       </button>
-      ${isManager ? '<button class="btn-secondary">⚙ Kelola Masjid</button>' : ''}
+      ${isManager ? `<button class="btn-secondary" id="btn-kelola-masjid" data-masjid="${masjidId}">⚙ Kelola Masjid</button>` : ''}
     </div>
   `
 
@@ -1110,6 +1195,11 @@ async function openMasjidDetail(masjidId) {
     }
     openMasjidDetail(masjidId)
   })
+
+  const kelolaBtn = document.getElementById('btn-kelola-masjid')
+  if (kelolaBtn) {
+    kelolaBtn.addEventListener('click', () => openMasjidManage(masjidId, masjid.name))
+  }
 }
 
 document.getElementById('masjid-detail-back').addEventListener('click', () => {
@@ -1202,6 +1292,205 @@ document.getElementById('masjid-add-form').addEventListener('submit', async (e) 
   } finally {
     submitBtn.disabled = false
     submitBtn.textContent = originalLabel
+  }
+})
+
+// ============================================================
+// ===== Phase 6: Kelola Masjid — Kegiatan, Pengumuman, Galeri ==
+// ============================================================
+let manageMasjidId = null
+
+async function openMasjidManage(masjidId, masjidName) {
+  manageMasjidId = masjidId
+  document.getElementById('masjid-view-detail').hidden = true
+  document.getElementById('masjid-view-manage').hidden = false
+  document.getElementById('manage-masjid-title').textContent = `Kelola: ${masjidName}`
+  switchManageTab('kegiatan')
+}
+
+document.getElementById('masjid-manage-back').addEventListener('click', () => {
+  document.getElementById('masjid-view-manage').hidden = true
+  document.getElementById('masjid-view-detail').hidden = false
+})
+
+document.getElementById('manage-tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('.manage-tab')
+  if (!btn) return
+  switchManageTab(btn.dataset.mtab)
+})
+
+function switchManageTab(tab) {
+  document.querySelectorAll('.manage-tab').forEach((b) => b.classList.toggle('active', b.dataset.mtab === tab))
+  document.querySelectorAll('.manage-panel').forEach((p) => (p.hidden = true))
+  document.getElementById(`manage-panel-${tab}`).hidden = false
+  if (tab === 'kegiatan') loadManageKegiatan()
+  if (tab === 'pengumuman') loadManagePengumuman()
+  if (tab === 'galeri') loadManageGaleri()
+}
+
+// ---- Kegiatan ----
+async function loadManageKegiatan() {
+  const listEl = document.getElementById('manage-kegiatan-list')
+  listEl.innerHTML = '<div class="empty-state">Memuat kegiatan...</div>'
+  const { data, error } = await supabase
+    .from('masjid_events')
+    .select('*')
+    .eq('masjid_id', manageMasjidId)
+    .order('event_date', { ascending: true })
+  if (error) {
+    listEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
+    return
+  }
+  if (!data.length) {
+    listEl.innerHTML = '<div class="empty-state">Belum ada kegiatan.</div>'
+    return
+  }
+  listEl.innerHTML = ''
+  data.forEach((ev) => {
+    const item = document.createElement('div')
+    item.className = 'manage-item'
+    item.innerHTML = `
+      <div class="manage-item-body">
+        <b>${escapeHtml(ev.title)} ${ev.event_type === 'kajian' ? '· Kajian' : ''}</b>
+        <small>${ev.event_date}${ev.event_time ? ' · ' + ev.event_time : ''}${ev.location ? ' · ' + escapeHtml(ev.location) : ''}</small>
+        ${ev.description ? `<p>${escapeHtml(ev.description)}</p>` : ''}
+      </div>
+      <button class="manage-delete-btn" data-id="${ev.id}">Hapus</button>
+    `
+    item.querySelector('.manage-delete-btn').addEventListener('click', async () => {
+      if (!confirm('Hapus kegiatan ini?')) return
+      await supabase.from('masjid_events').delete().eq('id', ev.id)
+      loadManageKegiatan()
+    })
+    listEl.appendChild(item)
+  })
+}
+
+document.getElementById('form-add-kegiatan').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const payload = {
+    masjid_id: manageMasjidId,
+    title: document.getElementById('mk-title').value.trim(),
+    event_type: document.getElementById('mk-type').value,
+    event_date: document.getElementById('mk-date').value,
+    event_time: document.getElementById('mk-time').value || null,
+    location: document.getElementById('mk-location').value.trim() || null,
+    speaker: document.getElementById('mk-speaker').value.trim() || null,
+    description: document.getElementById('mk-desc').value.trim() || null,
+    status: 'published',
+    created_by: currentUserId,
+  }
+  const { error } = await supabase.from('masjid_events').insert(payload)
+  if (error) { alert(error.message); return }
+  e.target.reset()
+  loadManageKegiatan()
+})
+
+// ---- Pengumuman ----
+async function loadManagePengumuman() {
+  const listEl = document.getElementById('manage-pengumuman-list')
+  listEl.innerHTML = '<div class="empty-state">Memuat pengumuman...</div>'
+  const { data, error } = await supabase
+    .from('masjid_announcements')
+    .select('*')
+    .eq('masjid_id', manageMasjidId)
+    .order('created_at', { ascending: false })
+  if (error) {
+    listEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
+    return
+  }
+  if (!data.length) {
+    listEl.innerHTML = '<div class="empty-state">Belum ada pengumuman.</div>'
+    return
+  }
+  listEl.innerHTML = ''
+  data.forEach((an) => {
+    const item = document.createElement('div')
+    item.className = 'manage-item'
+    item.innerHTML = `
+      <div class="manage-item-body">
+        <b>${escapeHtml(an.title)}</b>
+        <p>${escapeHtml(an.content)}</p>
+      </div>
+      <button class="manage-delete-btn" data-id="${an.id}">Hapus</button>
+    `
+    item.querySelector('.manage-delete-btn').addEventListener('click', async () => {
+      if (!confirm('Hapus pengumuman ini?')) return
+      await supabase.from('masjid_announcements').delete().eq('id', an.id)
+      loadManagePengumuman()
+    })
+    listEl.appendChild(item)
+  })
+}
+
+document.getElementById('form-add-pengumuman').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const payload = {
+    masjid_id: manageMasjidId,
+    title: document.getElementById('mp-title').value.trim(),
+    content: document.getElementById('mp-content').value.trim(),
+    author_id: currentUserId,
+    status: 'published',
+  }
+  const { error } = await supabase.from('masjid_announcements').insert(payload)
+  if (error) { alert(error.message); return }
+  e.target.reset()
+  loadManagePengumuman()
+})
+
+// ---- Galeri ----
+async function loadManageGaleri() {
+  const gridEl = document.getElementById('manage-galeri-grid')
+  gridEl.innerHTML = '<div class="empty-state">Memuat galeri...</div>'
+  const { data, error } = await supabase
+    .from('masjid_gallery')
+    .select('*')
+    .eq('masjid_id', manageMasjidId)
+    .order('created_at', { ascending: false })
+  if (error) {
+    gridEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
+    return
+  }
+  if (!data.length) {
+    gridEl.innerHTML = '<div class="empty-state">Belum ada foto di galeri.</div>'
+    return
+  }
+  gridEl.innerHTML = ''
+  data.forEach((g) => {
+    const item = document.createElement('div')
+    item.className = 'galeri-item'
+    item.innerHTML = `<img src="${g.image_url}" alt="${escapeHtml(g.caption || '')}" /><button class="galeri-item-delete" data-id="${g.id}">✕</button>`
+    item.querySelector('.galeri-item-delete').addEventListener('click', async () => {
+      if (!confirm('Hapus foto ini?')) return
+      await supabase.from('masjid_gallery').delete().eq('id', g.id)
+      loadManageGaleri()
+    })
+    gridEl.appendChild(item)
+  })
+}
+
+document.getElementById('mg-photo').addEventListener('change', async (e) => {
+  const file = e.target.files[0]
+  if (!file || !manageMasjidId) return
+  const pickerText = document.getElementById('galeri-picker-text')
+  const original = pickerText.textContent
+  pickerText.textContent = 'Mengunggah...'
+  try {
+    const ext = file.name.split('.').pop()
+    const path = `${currentUserId}/gallery-${manageMasjidId}-${Date.now()}.${ext}`
+    const { error: uploadError } = await supabase.storage.from('mosque-images').upload(path, file)
+    if (uploadError) throw uploadError
+    const { data: publicData } = supabase.storage.from('mosque-images').getPublicUrl(path)
+    const { error } = await supabase
+      .from('masjid_gallery')
+      .insert({ masjid_id: manageMasjidId, image_url: publicData.publicUrl })
+    if (error) throw error
+    loadManageGaleri()
+  } catch (err) {
+    alert(err.message || 'Gagal mengunggah foto.')
+  } finally {
+    pickerText.textContent = original
+    e.target.value = ''
   }
 })
 
