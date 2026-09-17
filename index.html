@@ -10,6 +10,12 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://kxoygpnapchpnbwvsmpg.supabase.co" />
+<link rel="preconnect" href="https://api.aladhan.com" />
+<link rel="preconnect" href="https://equran.id" />
+<link rel="dns-prefetch" href="https://kxoygpnapchpnbwvsmpg.supabase.co" />
+<link rel="dns-prefetch" href="https://api.aladhan.com" />
+<link rel="dns-prefetch" href="https://equran.id" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{
@@ -393,7 +399,7 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       <h2 id="auth-title">Selamat Datang</h2>
       <p class="muted" id="auth-subtitle">Masuk untuk melanjutkan ke MasjidKu</p>
 
-      <p id="auth-error" class="auth-error" hidden></p>
+      <p id="auth-error" class="auth-error" role="alert" hidden></p>
       <form id="login-form">
         <input type="text" id="name-input" placeholder="Nama Lengkap" hidden />
         <input type="email" id="email-input" required placeholder="Email" />
@@ -539,8 +545,8 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
         <button class="back-btn" id="masjid-add-back">‹ Kembali</button>
         <h1 class="page-title">Tambahkan Masjid</h1>
         <p class="muted">Masjid akan tampil di direktori setelah diverifikasi admin.</p>
-        <p id="masjid-add-error" class="auth-error" hidden></p>
-        <p id="masjid-add-success" class="auth-success" hidden></p>
+        <p id="masjid-add-error" class="auth-error" role="alert" hidden></p>
+        <p id="masjid-add-success" class="auth-success" role="status" hidden></p>
         <form id="masjid-add-form">
           <input required placeholder="Nama Masjid" id="f-name" />
           <input required placeholder="Alamat" id="f-address" />
@@ -660,8 +666,8 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
   </div>
 
   <!-- Bottom nav (exactly 5 items) -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" data-nav="beranda">
+  <nav class="bottom-nav" aria-label="Navigasi utama">
+    <button class="nav-item active" data-nav="beranda" aria-current="page">
       <svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg>
       Beranda
     </button>
@@ -901,7 +907,10 @@ function setActiveTab(tab) {
   document.querySelectorAll('.tab').forEach((el) => el.classList.remove('active'))
   document.getElementById('tab-' + tab).classList.add('active')
   document.querySelectorAll('.nav-item').forEach((el) => {
-    el.classList.toggle('active', el.dataset.nav === tab)
+    const isActive = el.dataset.nav === tab
+    el.classList.toggle('active', isActive)
+    if (isActive) el.setAttribute('aria-current', 'page')
+    else el.removeAttribute('aria-current')
   })
 }
 
@@ -1033,7 +1042,7 @@ function renderMasjidList(items) {
     const card = document.createElement('button')
     card.className = 'masjid-card'
     card.innerHTML = `
-      <div class="masjid-card-photo">${m.photo_url ? `<img src="${m.photo_url}" alt="${escapeHtml(m.name)}" />` : '🕌'}</div>
+      <div class="masjid-card-photo">${m.photo_url ? `<img src="${m.photo_url}" alt="${escapeHtml(m.name)}" loading="lazy" />` : '🕌'}</div>
       <div class="masjid-card-body">
         <p class="masjid-card-name">${escapeHtml(m.name)} ${
       m.verification_status === 'verified' ? '<span class="badge-verified">✓ Terverifikasi</span>' : ''
@@ -1174,7 +1183,7 @@ async function openMasjidDetail(masjidId) {
         ${masjid.website ? `<p>${escapeHtml(masjid.website)}</p>` : ''}
       </div>` : ''}
     <div class="detail-actions">
-      <button class="btn-secondary ${isFavorited ? 'is-active' : ''}" id="btn-fav-toggle">
+      <button class="btn-secondary ${isFavorited ? 'is-active' : ''}" id="btn-fav-toggle" aria-pressed="${isFavorited}">
         ${isFavorited ? '♥ Favorit' : '♡ Favoritkan'}
       </button>
       ${isManager ? `<button class="btn-secondary" id="btn-kelola-masjid" data-masjid="${masjidId}">⚙ Kelola Masjid</button>` : ''}
@@ -1459,7 +1468,7 @@ async function loadManageGaleri() {
   data.forEach((g) => {
     const item = document.createElement('div')
     item.className = 'galeri-item'
-    item.innerHTML = `<img src="${g.image_url}" alt="${escapeHtml(g.caption || '')}" /><button class="galeri-item-delete" data-id="${g.id}">✕</button>`
+    item.innerHTML = `<img src="${g.image_url}" alt="${escapeHtml(g.caption || '')}" loading="lazy" /><button class="galeri-item-delete" data-id="${g.id}" aria-label="Hapus foto ini">✕</button>`
     item.querySelector('.galeri-item-delete').addEventListener('click', async () => {
       if (!confirm('Hapus foto ini?')) return
       await supabase.from('masjid_gallery').delete().eq('id', g.id)
@@ -1583,8 +1592,8 @@ async function openSuratDetail(nomor) {
         <div class="ayat-top">
           <span class="ayat-number">${a.nomorAyat}</span>
           <div class="ayat-actions">
-            ${audioUrl ? `<button class="ayat-play" data-audio="${audioUrl}">▶</button>` : ''}
-            <button class="ayat-bookmark ${isBookmarked ? 'is-active' : ''}" data-surah="${nomor}" data-ayat="${a.nomorAyat}">${isBookmarked ? '★' : '☆'}</button>
+            ${audioUrl ? `<button class="ayat-play" data-audio="${audioUrl}" aria-label="Putar audio ayat ${a.nomorAyat}">▶</button>` : ''}
+            <button class="ayat-bookmark ${isBookmarked ? 'is-active' : ''}" data-surah="${nomor}" data-ayat="${a.nomorAyat}" aria-label="${isBookmarked ? 'Hapus bookmark ayat ini' : 'Bookmark ayat ini'}">${isBookmarked ? '★' : '☆'}</button>
           </div>
         </div>
         <p class="ayat-arab">${a.teksArab}</p>
@@ -1697,7 +1706,7 @@ async function openDoaCategory(category) {
     card.innerHTML = `
       <div class="ayat-top">
         <p class="doa-card-title">${escapeHtml(d.title)}</p>
-        <button class="ayat-bookmark ${isBookmarked ? 'is-active' : ''}" data-doa="${d.id}">${isBookmarked ? '★' : '☆'}</button>
+        <button class="ayat-bookmark ${isBookmarked ? 'is-active' : ''}" data-doa="${d.id}" aria-label="${isBookmarked ? 'Hapus bookmark doa ini' : 'Bookmark doa ini'}">${isBookmarked ? '★' : '☆'}</button>
       </div>
       <p class="doa-card-arab">${d.arabic_text}</p>
       ${d.latin_text ? `<p class="doa-card-latin">${escapeHtml(d.latin_text)}</p>` : ''}
