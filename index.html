@@ -277,6 +277,16 @@ body{
   width:22px;height:22px;border-radius:50%;font-size:12px;line-height:1;
 }
 
+.akun-list-item{
+  background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;
+}
+.akun-list-item b{font-size:13px;display:block;}
+.akun-list-item small{font-size:11px;color:rgba(27,36,32,0.5);}
+.settings-row{
+  display:flex;justify-content:space-between;align-items:center;background:#fff;
+  border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;font-size:13px;
+}
+
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
   padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
@@ -651,14 +661,14 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
         </div>
       </div>
       <div class="menu-card">
-        <button class="menu-item">Profil</button>
-        <button class="menu-item">Bookmark Al-Qur'an</button>
-        <button class="menu-item">Bookmark Doa</button>
-        <button class="menu-item">Masjid Favorit</button>
-        <button class="menu-item">Riwayat Belajar</button>
-        <button class="menu-item">Masjid yang Saya Kelola</button>
-        <button class="menu-item">Pengaturan</button>
-        <button class="menu-item">Privasi & Keamanan</button>
+        <button class="menu-item" data-akun="profil">Profil</button>
+        <button class="menu-item" data-akun="bookmark-quran">Bookmark Al-Qur'an</button>
+        <button class="menu-item" data-akun="bookmark-doa">Bookmark Doa</button>
+        <button class="menu-item" data-akun="favorit-masjid">Masjid Favorit</button>
+        <button class="menu-item" data-akun="riwayat-belajar">Riwayat Belajar</button>
+        <button class="menu-item" data-akun="masjid-dikelola">Masjid yang Saya Kelola</button>
+        <button class="menu-item" data-akun="pengaturan">Pengaturan</button>
+        <button class="menu-item" data-akun="privasi">Privasi & Keamanan</button>
       </div>
       <button class="btn-outline-danger" id="logout-btn">Keluar</button>
     </div>
@@ -688,6 +698,15 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       Akun
     </button>
   </nav>
+</section>
+
+<!-- ===================== AKUN DETAIL (standalone screen) ===================== -->
+<section id="screen-akun-detail" class="screen">
+  <div class="app-shell" style="padding:40px 20px 24px;">
+    <button class="back-btn" id="akun-detail-back">‹ Kembali</button>
+    <h1 class="page-title" id="akun-detail-title">Detail</h1>
+    <div id="akun-detail-content"></div>
+  </div>
 </section>
 
 <!-- ===================== WAKTU & KIBLAT (standalone screen) ===================== -->
@@ -2044,6 +2063,250 @@ document.getElementById('belajar-article-back').addEventListener('click', () => 
   document.getElementById('belajar-view-article').hidden = true
   document.getElementById('belajar-view-list').hidden = false
 })
+
+// ============================================================
+// ===== Akun: Profil, Bookmark, Favorit, Riwayat, Kelola, dll ==
+// ============================================================
+document.getElementById('akun-detail-back').addEventListener('click', () => showScreen('app'))
+
+document.querySelectorAll('[data-akun]').forEach((btn) => {
+  btn.addEventListener('click', () => openAkunDetail(btn.dataset.akun))
+})
+
+async function openAkunDetail(type) {
+  const uid = await getCurrentUserId()
+  const titleEl = document.getElementById('akun-detail-title')
+  const contentEl = document.getElementById('akun-detail-content')
+  contentEl.innerHTML = '<div class="empty-state">Memuat...</div>'
+  showScreen('akun-detail')
+
+  if (!uid && type !== 'privasi' && type !== 'pengaturan') {
+    titleEl.textContent = 'Masuk Diperlukan'
+    contentEl.innerHTML = '<div class="empty-state tall">Masuk ke akun Anda untuk mengakses ini.</div><button class="btn-primary" id="akun-goto-login">Masuk Sekarang</button>'
+    document.getElementById('akun-goto-login').addEventListener('click', () => showScreen('login'))
+    return
+  }
+
+  const loaders = {
+    'profil': () => loadAkunProfil(uid),
+    'bookmark-quran': () => loadAkunBookmarkQuran(uid),
+    'bookmark-doa': () => loadAkunBookmarkDoa(uid),
+    'favorit-masjid': () => loadAkunFavoritMasjid(uid),
+    'riwayat-belajar': () => loadAkunRiwayatBelajar(uid),
+    'masjid-dikelola': () => loadAkunMasjidDikelola(uid),
+    'pengaturan': () => loadAkunPengaturan(uid),
+    'privasi': () => loadAkunPrivasi(uid),
+  }
+  const titles = {
+    'profil': 'Profil',
+    'bookmark-quran': "Bookmark Al-Qur'an",
+    'bookmark-doa': 'Bookmark Doa',
+    'favorit-masjid': 'Masjid Favorit',
+    'riwayat-belajar': 'Riwayat Belajar',
+    'masjid-dikelola': 'Masjid yang Saya Kelola',
+    'pengaturan': 'Pengaturan',
+    'privasi': 'Privasi & Keamanan',
+  }
+  titleEl.textContent = titles[type] || 'Detail'
+  loaders[type]?.()
+}
+
+// ---- Profil ----
+async function loadAkunProfil(uid) {
+  const contentEl = document.getElementById('akun-detail-content')
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
+
+  contentEl.innerHTML = `
+    <form id="form-profil" class="manage-form">
+      <input value="${escapeHtml(user.email || '')}" disabled />
+      <input placeholder="Nama Lengkap" id="pf-name" value="${escapeHtml(profile?.full_name || '')}" />
+      <input placeholder="Nomor HP" id="pf-phone" value="${escapeHtml(profile?.phone || '')}" />
+      <button type="submit" class="btn-primary">Simpan Perubahan</button>
+    </form>
+  `
+  document.getElementById('form-profil').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const full_name = document.getElementById('pf-name').value.trim()
+    const phone = document.getElementById('pf-phone').value.trim()
+    const { error } = await supabase.from('profiles').update({ full_name, phone, updated_at: new Date().toISOString() }).eq('id', uid)
+    if (error) { alert(error.message); return }
+    document.getElementById('akun-name').textContent = full_name || user.email.split('@')[0]
+    alert('Profil berhasil disimpan.')
+  })
+}
+
+// ---- Bookmark Al-Qur'an ----
+async function loadAkunBookmarkQuran(uid) {
+  const contentEl = document.getElementById('akun-detail-content')
+  const { data, error } = await supabase
+    .from('quran_bookmarks')
+    .select('*')
+    .eq('user_id', uid)
+    .order('created_at', { ascending: false })
+  if (error) { contentEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`; return }
+  if (!data.length) { contentEl.innerHTML = '<div class="empty-state tall">Belum ada ayat yang di-bookmark.</div>'; return }
+
+  const surahMap = {}
+  if (allSurat.length) allSurat.forEach((s) => (surahMap[s.nomor] = s.namaLatin))
+  else { await loadSuratList(); allSurat.forEach((s) => (surahMap[s.nomor] = s.namaLatin)) }
+
+  contentEl.innerHTML = data.map((b) => `
+    <div class="akun-list-item" data-surah="${b.surah_number}">
+      <b>${escapeHtml(surahMap[b.surah_number] || 'Surat ' + b.surah_number)} : Ayat ${b.ayat_number}</b>
+    </div>
+  `).join('')
+  contentEl.querySelectorAll('.akun-list-item').forEach((el) => {
+    el.addEventListener('click', () => {
+      showScreen('app'); setActiveTab('quran')
+      openSuratDetail(Number(el.dataset.surah))
+    })
+  })
+}
+
+// ---- Bookmark Doa ----
+async function loadAkunBookmarkDoa(uid) {
+  const contentEl = document.getElementById('akun-detail-content')
+  const { data, error } = await supabase
+    .from('doa_bookmarks')
+    .select('doa:doas(*)')
+    .eq('user_id', uid)
+    .order('created_at', { ascending: false })
+  if (error) { contentEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`; return }
+  const items = (data || []).map((r) => r.doa).filter(Boolean)
+  if (!items.length) { contentEl.innerHTML = '<div class="empty-state tall">Belum ada doa yang di-bookmark.</div>'; return }
+  contentEl.innerHTML = items.map((d) => `
+    <div class="akun-list-item" data-category="${escapeHtml(d.category)}">
+      <b>${escapeHtml(d.title)}</b>
+      <small>${escapeHtml(d.category)}</small>
+    </div>
+  `).join('')
+  contentEl.querySelectorAll('.akun-list-item').forEach((el) => {
+    el.addEventListener('click', () => {
+      showScreen('app'); setActiveTab('doa')
+      openDoaCategory(el.dataset.category)
+    })
+  })
+}
+
+// ---- Masjid Favorit ----
+async function loadAkunFavoritMasjid(uid) {
+  const contentEl = document.getElementById('akun-detail-content')
+  const { data, error } = await supabase
+    .from('favorites_masjid')
+    .select('masjid:masjids(*)')
+    .eq('user_id', uid)
+  if (error) { contentEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`; return }
+  const items = (data || []).map((r) => r.masjid).filter(Boolean)
+  if (!items.length) { contentEl.innerHTML = '<div class="empty-state tall">Belum ada masjid favorit.</div>'; return }
+  contentEl.innerHTML = items.map((m) => `
+    <div class="akun-list-item" data-id="${m.id}">
+      <b>${escapeHtml(m.name)}</b>
+      <small>${escapeHtml(m.address || m.city || '-')}</small>
+    </div>
+  `).join('')
+  contentEl.querySelectorAll('.akun-list-item').forEach((el) => {
+    el.addEventListener('click', () => {
+      showScreen('app'); setActiveTab('masjid')
+      openMasjidDetail(el.dataset.id)
+    })
+  })
+}
+
+// ---- Riwayat Belajar ----
+async function loadAkunRiwayatBelajar(uid) {
+  const contentEl = document.getElementById('akun-detail-content')
+  const { data, error } = await supabase
+    .from('learning_history')
+    .select('viewed_at, content:learning_contents(*)')
+    .eq('user_id', uid)
+    .order('viewed_at', { ascending: false })
+    .limit(30)
+  if (error) { contentEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`; return }
+  const items = (data || []).filter((r) => r.content)
+  if (!items.length) { contentEl.innerHTML = '<div class="empty-state tall">Belum ada riwayat belajar.</div>'; return }
+  contentEl.innerHTML = items.map((r) => `
+    <div class="akun-list-item" data-id="${r.content.id}">
+      <b>${escapeHtml(r.content.title)}</b>
+      <small>${escapeHtml(r.content.category)}</small>
+    </div>
+  `).join('')
+  contentEl.querySelectorAll('.akun-list-item').forEach((el, i) => {
+    el.addEventListener('click', () => {
+      showScreen('belajar')
+      document.getElementById('belajar-view-categories').hidden = true
+      document.getElementById('belajar-view-list').hidden = true
+      document.getElementById('belajar-view-article').hidden = false
+      openBelajarArticle(items[i].content)
+    })
+  })
+}
+
+// ---- Masjid yang Saya Kelola ----
+async function loadAkunMasjidDikelola(uid) {
+  const contentEl = document.getElementById('akun-detail-content')
+  const { data, error } = await supabase
+    .from('masjid_managers')
+    .select('role, masjid:masjids(*)')
+    .eq('user_id', uid)
+  if (error) { contentEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`; return }
+  const items = (data || []).filter((r) => r.masjid)
+  if (!items.length) { contentEl.innerHTML = '<div class="empty-state tall">Anda belum mengelola masjid apa pun.</div>'; return }
+  contentEl.innerHTML = items.map((r) => `
+    <div class="akun-list-item" data-id="${r.masjid.id}">
+      <b>${escapeHtml(r.masjid.name)}</b>
+      <small>Peran: ${escapeHtml(r.role)} · ${r.masjid.verification_status}</small>
+    </div>
+  `).join('')
+  contentEl.querySelectorAll('.akun-list-item').forEach((el) => {
+    el.addEventListener('click', () => {
+      showScreen('app'); setActiveTab('masjid')
+      openMasjidDetail(el.dataset.id)
+    })
+  })
+}
+
+// ---- Pengaturan ----
+async function loadAkunPengaturan(uid) {
+  const contentEl = document.getElementById('akun-detail-content')
+  if (!uid) {
+    contentEl.innerHTML = '<div class="empty-state tall">Masuk untuk mengatur preferensi lokasi & jadwal sholat.</div>'
+    return
+  }
+  const { data: ps } = await supabase.from('prayer_settings').select('*').eq('user_id', uid).maybeSingle()
+  contentEl.innerHTML = `
+    <div class="settings-row"><span>Metode Perhitungan</span><b>Kemenag (Indonesia)</b></div>
+    <div class="settings-row"><span>Lokasi Tersimpan</span><b>${ps?.latitude ? ps.latitude.toFixed(3) + ', ' + ps.longitude.toFixed(3) : 'Belum ada'}</b></div>
+    <p class="muted" style="margin-top:12px;">Lokasi otomatis diperbarui saat Anda membuka halaman Waktu & Kiblat dengan izin lokasi aktif.</p>
+  `
+}
+
+// ---- Privasi & Keamanan ----
+async function loadAkunPrivasi(uid) {
+  const contentEl = document.getElementById('akun-detail-content')
+  if (!uid) {
+    contentEl.innerHTML = `
+      <p class="muted">MasjidKu menghormati privasi Anda. Lokasi hanya diminta saat diperlukan (jadwal sholat, arah kiblat, masjid terdekat) dan tidak dilacak terus-menerus. Data pribadi hanya digunakan untuk fitur personal seperti bookmark dan favorit.</p>
+    `
+    return
+  }
+  contentEl.innerHTML = `
+    <p class="muted">Lokasi hanya diminta saat diperlukan dan tidak dilacak terus-menerus. Data pribadi hanya untuk fitur personal (bookmark, favorit, riwayat).</p>
+    <h3 style="margin-top:20px;font-size:13px;color:rgba(27,36,32,0.5);">Ganti Kata Sandi</h3>
+    <form id="form-ganti-sandi" class="manage-form" style="margin-top:8px;">
+      <input type="password" id="new-password" placeholder="Kata sandi baru (min. 6 karakter)" minlength="6" required />
+      <button type="submit" class="btn-primary">Ganti Kata Sandi</button>
+    </form>
+  `
+  document.getElementById('form-ganti-sandi').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const newPassword = document.getElementById('new-password').value
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) { alert(error.message); return }
+    alert('Kata sandi berhasil diganti.')
+    e.target.reset()
+  })
+}
 
 })
 </script>
