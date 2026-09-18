@@ -288,9 +288,9 @@ body{
 }
 
 .mini-player{
-  position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+  position:fixed;bottom:calc(60px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:100%;max-width:480px;
   background:var(--brand-dark);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;
-  align-items:center;z-index:20;box-shadow:0 -4px 16px rgba(0,0,0,0.15);
+  align-items:center;z-index:15;box-shadow:0 -4px 16px rgba(0,0,0,0.15);
 }
 .mini-player-info b{font-size:13px;display:block;}
 .mini-player-info small{font-size:11px;color:rgba(255,255,255,0.6);}
@@ -410,7 +410,7 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 /* ---- Bottom nav ---- */
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
-  background:#fff;border-top:1px solid var(--border);
+  background:#fff;border-top:1px solid var(--border);z-index:10;
   display:flex;justify-content:space-between;padding:8px 8px calc(6px + env(safe-area-inset-bottom));
 }
 .nav-item{
@@ -552,7 +552,7 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       <div id="quran-view-detail" hidden>
         <button class="back-btn" id="quran-detail-back">‹ Kembali</button>
         <div id="quran-detail-header"></div>
-        <div id="quran-ayat-list" style="padding-bottom:70px;"></div>
+        <div id="quran-ayat-list" style="padding-bottom:150px;"></div>
       </div>
       <div id="quran-mini-player" class="mini-player" hidden>
         <div class="mini-player-info">
