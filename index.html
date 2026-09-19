@@ -318,6 +318,24 @@ body{
 .video-embed-wrap{position:relative;width:100%;padding-top:56.25%;border-radius:16px;overflow:hidden;background:#000;}
 .video-embed-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
 
+.profile-photo-card{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  background:#fff;border:1px solid var(--border);border-radius:20px;padding:24px 16px;margin-bottom:16px;
+}
+.profile-photo-wrap{position:relative;width:88px;height:88px;margin-bottom:12px;}
+.profile-photo-img{width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid var(--brand-light);}
+.profile-photo-fallback{
+  width:88px;height:88px;border-radius:50%;background:var(--brand-light);color:var(--brand);
+  display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;border:3px solid var(--brand-light);
+}
+.profile-photo-edit-btn{
+  position:absolute;bottom:0;right:0;width:30px;height:30px;border-radius:50%;background:var(--brand);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;
+  border:2px solid #fff;
+}
+.profile-photo-card b{font-size:15px;}
+.profile-photo-card small{font-size:12px;color:rgba(27,36,32,0.5);}
+
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
   padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
@@ -341,6 +359,13 @@ body{
 .beranda-header .page-title{color:#fff;}
 .beranda-header .muted{color:rgba(255,255,255,0.7);}
 .beranda-header > *{position:relative;z-index:1;}
+.beranda-header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.beranda-header-text{flex:1;min-width:0;}
+.beranda-avatar{
+  width:64px;height:64px;border-radius:50%;flex-shrink:0;overflow:hidden;
+  border:3px solid rgba(255,255,255,0.5);box-shadow:0 4px 12px rgba(0,0,0,0.15);
+}
+.beranda-avatar img{width:100%;height:100%;object-fit:cover;}
 .page-title{font-size:20px;font-weight:800;color:var(--brand-dark);margin:4px 0 8px;}
 
 .prayer-card{
@@ -468,8 +493,13 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
     <!-- Beranda -->
     <div id="tab-beranda" class="tab active">
       <div class="beranda-header">
-        <p class="greeting">Assalamu'alaikum</p>
-        <h1 class="page-title">Selamat datang di MasjidKu</h1>
+        <div class="beranda-header-row">
+          <div class="beranda-header-text">
+            <p class="greeting">Assalamu'alaikum</p>
+            <h1 class="page-title">Selamat datang di MasjidKu</h1>
+          </div>
+          <div id="beranda-avatar" class="beranda-avatar" hidden></div>
+        </div>
         <p class="muted">Mari kita hadirkan masjid dalam genggaman, menguatkan iman dan kebersamaan umat.</p>
       </div>
 
@@ -879,6 +909,14 @@ async function applySessionToUI(session) {
     user.user_metadata?.full_name || user.email?.split('@')[0] || 'Pengguna'
   document.getElementById('akun-email').textContent = user.email || ''
   document.getElementById('akun-avatar').textContent = (user.email || 'U').charAt(0).toUpperCase()
+
+  if (supabase) {
+    const { data: profile } = await supabase.from('profiles').select('avatar_url, full_name').eq('id', user.id).maybeSingle()
+    if (profile) {
+      if (profile.full_name) document.getElementById('akun-name').textContent = profile.full_name
+      updateBerandaAvatar(profile)
+    }
+  }
 }
 
 function resetAkunToGuest() {
@@ -2299,24 +2337,98 @@ async function loadAkunProfil(uid) {
   const contentEl = document.getElementById('akun-detail-content')
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
+  renderProfilView(uid, user, profile || {})
+}
 
+function renderProfilView(uid, user, profile) {
+  const contentEl = document.getElementById('akun-detail-content')
+  const displayName = profile.full_name || user.email.split('@')[0]
   contentEl.innerHTML = `
-    <form id="form-profil" class="manage-form">
-      <input value="${escapeHtml(user.email || '')}" disabled />
-      <input placeholder="Nama Lengkap" id="pf-name" value="${escapeHtml(profile?.full_name || '')}" />
-      <input placeholder="Nomor HP" id="pf-phone" value="${escapeHtml(profile?.phone || '')}" />
-      <button type="submit" class="btn-primary">Simpan Perubahan</button>
+    <div class="profile-photo-card">
+      <div class="profile-photo-wrap">
+        ${profile.avatar_url
+          ? `<img src="${profile.avatar_url}" alt="${escapeHtml(displayName)}" class="profile-photo-img" />`
+          : `<div class="profile-photo-fallback">${escapeHtml(displayName.charAt(0).toUpperCase())}</div>`}
+        <label class="profile-photo-edit-btn" id="profile-photo-label">
+          📷
+          <input type="file" id="pf-photo" accept="image/png,image/jpeg,image/webp" hidden />
+        </label>
+      </div>
+      <b>${escapeHtml(displayName)}</b>
+      <small>${escapeHtml(user.email)}</small>
+    </div>
+
+    <div id="profil-view-mode">
+      <div class="settings-row"><span>Nomor HP</span><b>${escapeHtml(profile.phone || '-')}</b></div>
+      <div class="settings-row"><span>Kota Domisili</span><b>${escapeHtml(profile.city || '-')}</b></div>
+      <div class="settings-row" style="align-items:flex-start;"><span>Bio</span><b style="text-align:right;max-width:60%;">${escapeHtml(profile.bio || '-')}</b></div>
+      <button class="btn-secondary" id="btn-edit-profil" style="margin-top:14px;">✏️ Edit Profil</button>
+    </div>
+
+    <form id="form-profil" class="manage-form" hidden>
+      <input placeholder="Nama Lengkap" id="pf-name" value="${escapeHtml(profile.full_name || '')}" />
+      <input placeholder="Nomor HP" id="pf-phone" value="${escapeHtml(profile.phone || '')}" />
+      <input placeholder="Kota Domisili" id="pf-city" value="${escapeHtml(profile.city || '')}" />
+      <textarea placeholder="Bio singkat (opsional)" id="pf-bio" rows="2">${escapeHtml(profile.bio || '')}</textarea>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn-secondary" id="btn-cancel-edit">Batal</button>
+        <button type="submit" class="btn-primary" style="flex:1;">Simpan Perubahan</button>
+      </div>
     </form>
   `
+
+  document.getElementById('btn-edit-profil').addEventListener('click', () => {
+    document.getElementById('profil-view-mode').hidden = true
+    document.getElementById('form-profil').hidden = false
+  })
+  document.getElementById('btn-cancel-edit').addEventListener('click', () => {
+    document.getElementById('form-profil').hidden = true
+    document.getElementById('profil-view-mode').hidden = false
+  })
+
   document.getElementById('form-profil').addEventListener('submit', async (e) => {
     e.preventDefault()
     const full_name = document.getElementById('pf-name').value.trim()
     const phone = document.getElementById('pf-phone').value.trim()
-    const { error } = await supabase.from('profiles').update({ full_name, phone, updated_at: new Date().toISOString() }).eq('id', uid)
+    const city = document.getElementById('pf-city').value.trim()
+    const bio = document.getElementById('pf-bio').value.trim()
+    const { error } = await supabase.from('profiles')
+      .update({ full_name, phone, city, bio, updated_at: new Date().toISOString() })
+      .eq('id', uid)
     if (error) { alert(error.message); return }
     document.getElementById('akun-name').textContent = full_name || user.email.split('@')[0]
-    alert('Profil berhasil disimpan.')
+    const updatedProfile = { ...profile, full_name, phone, city, bio }
+    renderProfilView(uid, user, updatedProfile)
+    updateBerandaAvatar(updatedProfile)
   })
+
+  document.getElementById('pf-photo').addEventListener('change', async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${uid}/avatar-${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file)
+      if (uploadError) throw uploadError
+      const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(path)
+      const { error } = await supabase.from('profiles').update({ avatar_url: publicData.publicUrl }).eq('id', uid)
+      if (error) throw error
+      const updatedProfile = { ...profile, avatar_url: publicData.publicUrl }
+      renderProfilView(uid, user, updatedProfile)
+      updateBerandaAvatar(updatedProfile)
+    } catch (err) {
+      alert(err.message || 'Gagal mengunggah foto.')
+    }
+  })
+}
+
+function updateBerandaAvatar(profile) {
+  const el = document.getElementById('beranda-avatar')
+  if (!el) return
+  if (profile.avatar_url) {
+    el.innerHTML = `<img src="${profile.avatar_url}" alt="Foto profil" />`
+    el.hidden = false
+  }
 }
 
 // ---- Bookmark Al-Qur'an ----
