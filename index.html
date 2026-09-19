@@ -190,6 +190,19 @@ body{
 .ayat-latin{font-size:12px;font-style:italic;color:rgba(27,36,32,0.5);margin-bottom:6px;}
 .ayat-translation{font-size:13px;color:rgba(27,36,32,0.75);line-height:1.6;}
 
+.doa-header{
+  position:relative;overflow:hidden;
+  margin:-40px -20px 20px;padding:32px 20px 24px;
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2264%22%20height%3D%2264%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%221.5%22%20opacity%3D%220.28%22%3E%3Cpath%20d%3D%22M32%204%20L40%2024%20L60%2032%20L40%2040%20L32%2060%20L24%2040%20L4%2032%20L24%2024%20Z%22/%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2210%22/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(135deg,var(--brand),var(--brand-dark));
+  background-size:64px 64px, cover;
+  background-repeat:repeat, no-repeat;
+  border-radius:0 0 28px 28px;color:#fff;
+}
+.doa-header .page-title{color:#fff;position:relative;z-index:1;}
+.doa-header .muted{color:rgba(255,255,255,0.75);position:relative;z-index:1;}
+.doa-header-illust{position:absolute;bottom:0;right:8px;width:100px;height:auto;pointer-events:none;}
+
 .doa-item{cursor:pointer;}
 .doa-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;}
 .doa-card-title{font-weight:700;font-size:14px;margin:0 0 10px;}
@@ -431,12 +444,18 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 .doa-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
 .doa-item{
   background:#fff;border:1px solid var(--border);border-radius:20px;padding:16px;
-  font-size:13px;font-weight:700;color:rgba(27,36,32,0.85);display:flex;flex-direction:column;gap:8px;
+  font-size:14px;font-weight:600;color:rgba(27,36,32,0.8);
 }
-.doa-item-icon{
-  width:40px;height:40px;border-radius:12px;background:var(--brand-light);color:var(--brand);
+.doa-cat-item{
+  background:linear-gradient(135deg,var(--brand),var(--brand-dark));border:none;border-radius:20px;padding:16px;
+  font-size:13px;font-weight:700;color:#fff;display:flex;flex-direction:column;gap:8px;cursor:pointer;
+  box-shadow:0 4px 12px rgba(15,92,63,0.18);
+}
+.doa-cat-item-icon{
+  width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,0.2);color:#fff;
   display:flex;align-items:center;justify-content:center;font-size:19px;
 }
+.doa-cat-item .masjid-card-dist{color:rgba(255,255,255,0.85);}
 
 .profile-row{display:flex;align-items:center;gap:12px;}
 .avatar{width:56px;height:56px;border-radius:50%;background:var(--brand-light);color:var(--brand);
@@ -726,8 +745,19 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
     <!-- Doa -->
     <div id="tab-doa" class="tab">
       <div id="doa-view-categories">
-        <h1 class="page-title">Doa</h1>
-        <p class="muted">Kumpulan doa harian lengkap dengan referensi.</p>
+        <div class="doa-header">
+          <svg class="doa-header-illust" viewBox="0 0 120 90" preserveAspectRatio="xMaxYMax meet">
+            <g fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
+              <path d="M40 78c0-14 6-22 6-32 0-6-3-10-3-16 0-4 3-7 7-7s7 3 7 7c0 6-3 10-3 16 0 10 6 18 6 32"/>
+              <path d="M40 78h20"/>
+              <path d="M20 78c2-10 6-16 12-20"/>
+              <path d="M80 78c-2-10-6-16-12-20"/>
+              <circle cx="60" cy="14" r="5"/>
+            </g>
+          </svg>
+          <h1 class="page-title">Doa</h1>
+          <p class="muted">Kumpulan doa harian lengkap dengan referensi.</p>
+        </div>
         <input id="doa-search" class="search-input" placeholder="Cari judul doa..." />
         <div id="doa-search-results" hidden></div>
         <div class="doa-grid" id="doa-grid">
@@ -1891,8 +1921,8 @@ async function loadDoaCategories() {
   gridEl.innerHTML = ''
   categories.forEach((cat) => {
     const item = document.createElement('div')
-    item.className = 'doa-item'
-    item.innerHTML = `<span class="doa-item-icon">${DOA_CATEGORY_ICON[cat] || '📿'}</span>${escapeHtml(cat)}<span class="masjid-card-dist">${counts[cat]} doa</span>`
+    item.className = 'doa-cat-item'
+    item.innerHTML = `<span class="doa-cat-item-icon">${DOA_CATEGORY_ICON[cat] || '📿'}</span>${escapeHtml(cat)}<span class="masjid-card-dist">${counts[cat]} doa</span>`
     item.addEventListener('click', () => openDoaCategory(cat))
     gridEl.appendChild(item)
   })
