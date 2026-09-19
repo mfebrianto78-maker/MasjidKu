@@ -374,6 +374,20 @@ body{
 .profile-photo-card b{font-size:15px;}
 .profile-photo-card small{font-size:12px;color:rgba(27,36,32,0.5);}
 
+.galeri-dunia-card{
+  position:relative;border-radius:20px;overflow:hidden;margin-bottom:16px;
+  background:linear-gradient(135deg,var(--brand),var(--brand-dark));min-height:180px;
+}
+.galeri-dunia-card img{width:100%;height:140px;object-fit:cover;display:block;}
+.galeri-dunia-card-body{padding:14px 16px 16px;color:#fff;}
+.galeri-dunia-card-body h3{font-size:16px;font-weight:800;margin:0 0 8px;}
+.galeri-dunia-card-body p{font-size:12.5px;color:rgba(255,255,255,0.85);line-height:1.5;margin:0 0 10px;}
+.galeri-dunia-card-footer{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:rgba(255,255,255,0.75);}
+.galeri-dunia-card-footer a{color:#fff;font-weight:700;text-decoration:none;}
+.galeri-dunia-no-photo{
+  height:100px;display:flex;align-items:center;justify-content:center;font-size:32px;background:rgba(255,255,255,0.1);
+}
+
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
   padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
@@ -623,6 +637,15 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
         <span class="belajar-card-text">
           <b>Belajar Islam</b>
           <small>Al-Qur'an, Hadis, Fiqih, Aqidah, Akhlak, Sirah, Tafsir & Keluarga</small>
+        </span>
+        <span class="belajar-card-arrow">›</span>
+      </button>
+
+      <button class="belajar-card" id="btn-open-galeri-dunia">
+        <span class="belajar-card-icon">🕌</span>
+        <span class="belajar-card-text">
+          <b>Galeri Masjid Dunia</b>
+          <small>Masjid-masjid bersejarah & terkenal di dunia</small>
         </span>
         <span class="belajar-card-arrow">›</span>
       </button>
@@ -946,6 +969,16 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 </section>
 
 <!-- ===================== BELAJAR ISLAM (standalone screen) ===================== -->
+<!-- ===================== GALERI MASJID DUNIA (standalone screen) ===================== -->
+<section id="screen-galeri-dunia" class="screen">
+  <div class="app-shell" style="padding:40px 20px 24px;">
+    <button class="back-btn" id="galeri-dunia-back">‹ Kembali</button>
+    <h1 class="page-title">Galeri Masjid Dunia</h1>
+    <p class="muted">Masjid-masjid bersejarah dan terkenal di berbagai penjuru dunia.</p>
+    <div id="galeri-dunia-list" style="margin-top:16px;"></div>
+  </div>
+</section>
+
 <section id="screen-belajar" class="screen">
   <div class="app-shell">
     <div id="belajar-view-categories" style="padding:40px 20px 24px;">
@@ -2319,6 +2352,53 @@ document.getElementById('waktu-back-to-app').addEventListener('click', () => sho
 
 // Muat jadwal sholat mini di Beranda begitu app dibuka
 loadPrayerAndHijri()
+
+// ============================================================
+// ===== Galeri Masjid Dunia (kurasi admin) =====================
+// ============================================================
+document.getElementById('btn-open-galeri-dunia').addEventListener('click', () => {
+  showScreen('galeri-dunia')
+  loadGaleriDunia()
+})
+
+document.getElementById('galeri-dunia-back').addEventListener('click', () => showScreen('app'))
+
+async function loadGaleriDunia() {
+  const listEl = document.getElementById('galeri-dunia-list')
+  listEl.innerHTML = '<div class="empty-state">Memuat galeri...</div>'
+  const { data, error } = await supabase
+    .from('galeri_masjid_dunia')
+    .select('*')
+    .order('sort_order', { ascending: true })
+  if (error) {
+    listEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
+    return
+  }
+  if (!data.length) {
+    listEl.innerHTML = '<div class="empty-state tall">Belum ada data. Admin bisa menambahkannya lewat Supabase dashboard (tabel galeri_masjid_dunia).</div>'
+    return
+  }
+  listEl.innerHTML = data.map((m) => {
+    const mapLink = (m.latitude != null && m.longitude != null)
+      ? `<a href="https://www.google.com/maps?q=${m.latitude},${m.longitude}" target="_blank" rel="noopener">Peta ›</a>`
+      : ''
+    return `
+      <div class="galeri-dunia-card">
+        ${m.image_url
+          ? `<img src="${m.image_url}" alt="${escapeHtml(m.name)}" loading="lazy" />`
+          : `<div class="galeri-dunia-no-photo">🕌</div>`}
+        <div class="galeri-dunia-card-body">
+          <h3>${escapeHtml(m.name)}</h3>
+          <p>${escapeHtml(m.description)}</p>
+          <div class="galeri-dunia-card-footer">
+            <span>${m.latitude != null ? `📍 ${m.latitude.toFixed(4)}°, ${m.longitude.toFixed(4)}°` : escapeHtml(m.location || '')}</span>
+            ${mapLink}
+          </div>
+        </div>
+      </div>
+    `
+  }).join('')
+}
 
 document.getElementById('btn-open-belajar').addEventListener('click', () => {
   showScreen('belajar')
