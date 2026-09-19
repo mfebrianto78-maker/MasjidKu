@@ -197,6 +197,15 @@ body{
 .doa-card-latin{font-size:12px;font-style:italic;color:rgba(27,36,32,0.5);margin-bottom:8px;}
 .doa-card-translation{font-size:13px;color:rgba(27,36,32,0.75);line-height:1.6;margin-bottom:8px;}
 .doa-card-source{font-size:11px;color:var(--brand);font-weight:600;}
+.doa-card-actions{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);}
+.doa-action-btn{
+  flex:1;background:rgba(27,36,32,0.03);border:none;border-radius:10px;padding:9px;
+  font-size:11px;font-weight:700;color:rgba(27,36,32,0.6);display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.doa-action-btn.is-active{background:var(--brand-light);color:var(--brand);}
+.doa-search-item{background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;}
+.doa-search-item b{font-size:13px;display:block;}
+.doa-search-item small{font-size:11px;color:rgba(27,36,32,0.5);}
 
 .belajar-card{
   width:100%;margin-top:16px;background:linear-gradient(135deg,#fff,var(--brand-light));
@@ -420,7 +429,14 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 .chip.active{background:var(--brand);color:#fff;}
 
 .doa-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
-.doa-item{background:#fff;border:1px solid var(--border);border-radius:20px;padding:16px;font-size:14px;font-weight:600;color:rgba(27,36,32,0.8);}
+.doa-item{
+  background:#fff;border:1px solid var(--border);border-radius:20px;padding:16px;
+  font-size:13px;font-weight:700;color:rgba(27,36,32,0.85);display:flex;flex-direction:column;gap:8px;
+}
+.doa-item-icon{
+  width:40px;height:40px;border-radius:12px;background:var(--brand-light);color:var(--brand);
+  display:flex;align-items:center;justify-content:center;font-size:19px;
+}
 
 .profile-row{display:flex;align-items:center;gap:12px;}
 .avatar{width:56px;height:56px;border-radius:50%;background:var(--brand-light);color:var(--brand);
@@ -712,6 +728,8 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       <div id="doa-view-categories">
         <h1 class="page-title">Doa</h1>
         <p class="muted">Kumpulan doa harian lengkap dengan referensi.</p>
+        <input id="doa-search" class="search-input" placeholder="Cari judul doa..." />
+        <div id="doa-search-results" hidden></div>
         <div class="doa-grid" id="doa-grid">
           <div class="empty-state">Memuat kategori doa...</div>
         </div>
@@ -1829,6 +1847,19 @@ document.getElementById('mini-player-stop').addEventListener('click', stopMiniPl
 // ===== Phase 4: Doa (Supabase) ===============================
 // ============================================================
 let doaBookmarkIds = new Set()
+let allDoasCache = []
+
+const DOA_CATEGORY_ICON = {
+  'Doa Harian': '📖',
+  'Sebelum Tidur': '🌙',
+  'Bangun Tidur': '🌅',
+  'Makan': '🍽️',
+  'Perjalanan': '🚗',
+  'Keluarga': '👨‍👩‍👧',
+  'Ibadah': '🕌',
+  'Perlindungan': '🛡️',
+  'Kesehatan': '💚',
+}
 
 async function loadDoaBookmarks() {
   doaBookmarkIds = new Set()
@@ -1844,13 +1875,14 @@ async function loadDoaCategories() {
     gridEl.innerHTML = '<div class="empty-state tall">Supabase belum terhubung.</div>'
     return
   }
-  const { data, error } = await supabase.from('doas').select('category')
+  const { data, error } = await supabase.from('doas').select('*')
   if (error) {
     gridEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`
     return
   }
+  allDoasCache = data || []
   const counts = {}
-  ;(data || []).forEach((d) => { counts[d.category] = (counts[d.category] || 0) + 1 })
+  allDoasCache.forEach((d) => { counts[d.category] = (counts[d.category] || 0) + 1 })
   const categories = Object.keys(counts)
   if (!categories.length) {
     gridEl.innerHTML = '<div class="empty-state tall">Belum ada data doa.</div>'
@@ -1860,11 +1892,31 @@ async function loadDoaCategories() {
   categories.forEach((cat) => {
     const item = document.createElement('div')
     item.className = 'doa-item'
-    item.innerHTML = `${escapeHtml(cat)}<br><span class="masjid-card-dist">${counts[cat]} doa</span>`
+    item.innerHTML = `<span class="doa-item-icon">${DOA_CATEGORY_ICON[cat] || '📿'}</span>${escapeHtml(cat)}<span class="masjid-card-dist">${counts[cat]} doa</span>`
     item.addEventListener('click', () => openDoaCategory(cat))
     gridEl.appendChild(item)
   })
 }
+
+document.getElementById('doa-search').addEventListener('input', (e) => {
+  const kw = e.target.value.trim().toLowerCase()
+  const resultsEl = document.getElementById('doa-search-results')
+  const gridEl = document.getElementById('doa-grid')
+  if (!kw) {
+    resultsEl.hidden = true
+    gridEl.hidden = false
+    return
+  }
+  gridEl.hidden = true
+  resultsEl.hidden = false
+  const matches = allDoasCache.filter((d) => d.title.toLowerCase().includes(kw))
+  resultsEl.innerHTML = matches.length
+    ? matches.map((d) => `<div class="doa-search-item" data-id="${d.id}" data-category="${escapeHtml(d.category)}"><b>${escapeHtml(d.title)}</b><small>${escapeHtml(d.category)}</small></div>`).join('')
+    : '<div class="empty-state">Tidak ditemukan.</div>'
+  resultsEl.querySelectorAll('.doa-search-item').forEach((el) => {
+    el.addEventListener('click', () => openDoaCategory(el.dataset.category))
+  })
+})
 
 async function openDoaCategory(category) {
   document.getElementById('doa-view-categories').hidden = true
@@ -1894,7 +1946,31 @@ async function openDoaCategory(category) {
       ${d.latin_text ? `<p class="doa-card-latin">${escapeHtml(d.latin_text)}</p>` : ''}
       <p class="doa-card-translation">${escapeHtml(d.translation_id)}</p>
       ${d.source_reference ? `<p class="doa-card-source">${escapeHtml(d.source_reference)}</p>` : ''}
+      <div class="doa-card-actions">
+        <button class="doa-action-btn doa-copy-btn">📋 Salin</button>
+        <button class="doa-action-btn doa-share-btn">📤 Bagikan</button>
+      </div>
     `
+    const plainText = `${d.title}\n\n${d.arabic_text}\n${d.latin_text ? d.latin_text + '\n' : ''}\n${d.translation_id}${d.source_reference ? '\n(' + d.source_reference + ')' : ''}`
+    card.querySelector('.doa-copy-btn').addEventListener('click', async (e) => {
+      try {
+        await navigator.clipboard.writeText(plainText)
+        const btn = e.currentTarget
+        btn.textContent = '✓ Tersalin'
+        btn.classList.add('is-active')
+        setTimeout(() => { btn.textContent = '📋 Salin'; btn.classList.remove('is-active') }, 1500)
+      } catch (err) { alert('Gagal menyalin.') }
+    })
+    card.querySelector('.doa-share-btn').addEventListener('click', async () => {
+      if (navigator.share) {
+        try { await navigator.share({ title: d.title, text: plainText }) } catch (err) {}
+      } else {
+        try {
+          await navigator.clipboard.writeText(plainText)
+          alert('Teks doa disalin (fitur bagikan langsung tidak tersedia di browser ini).')
+        } catch (err) {}
+      }
+    })
     listEl.appendChild(card)
   })
 
@@ -1915,6 +1991,7 @@ async function openDoaCategory(category) {
         btn.classList.add('is-active')
       }
     })
+
   })
 }
 
