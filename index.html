@@ -174,7 +174,7 @@ body{
 }
 .quran-header .page-title{color:#fff;position:relative;z-index:1;}
 .quran-header .muted{color:rgba(255,255,255,0.75);position:relative;z-index:1;}
-.quran-header-illust{position:absolute;bottom:-6px;right:4px;width:110px;height:auto;pointer-events:none;}
+.quran-header-illust{position:absolute;bottom:-10px;right:-6px;width:150px;height:auto;pointer-events:none;}
 
 .surat-list{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
 .surat-card{
@@ -624,12 +624,23 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
     <div id="tab-quran" class="tab">
       <div id="quran-view-list">
         <div class="quran-header">
-          <svg class="quran-header-illust" viewBox="0 0 120 100" preserveAspectRatio="xMaxYMax meet">
-            <g fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
-              <path d="M20 20c0-4 3-6 8-6h24v66H28c-5 0-8-2-8-6Z"/>
-              <path d="M100 20c0-4-3-6-8-6H68v66h24c5 0 8-2 8-6Z"/>
-              <path d="M52 14v66"/>
-              <path d="M30 26h14M30 34h14M76 26h14M76 34h14"/>
+          <svg class="quran-header-illust" viewBox="0 0 160 130" preserveAspectRatio="xMaxYMax meet">
+            <g opacity="0.95">
+              <!-- Halaman kiri -->
+              <path d="M78 20c-2-3-6-5-11-6L26 8c-6-1-11 3-11 8v78c0 5 5 8 10 7l38-5c5-1 9-4 11-7Z" fill="none" stroke="#fff" stroke-width="2"/>
+              <rect x="24" y="18" width="46" height="76" rx="3" fill="none" stroke="#fff" stroke-width="1.3" opacity="0.7"/>
+              <path d="M47 30l6 10-6 10-6-10Z" fill="none" stroke="#fff" stroke-width="1.3"/>
+              <path d="M32 30q15-6 30 0M32 40q15-6 30 0M32 76q15 6 30 0M32 86q15 6 30 0" stroke="#fff" stroke-width="0.9" opacity="0.6"/>
+
+              <!-- Halaman kanan -->
+              <path d="M82 20c2-3 6-5 11-6l41-6c6-1 11 3 11 8v78c0 5-5 8-10 7l-38-5c-5-1-9-4-11-7Z" fill="none" stroke="#fff" stroke-width="2"/>
+              <rect x="90" y="18" width="46" height="76" rx="3" fill="none" stroke="#fff" stroke-width="1.3" opacity="0.7"/>
+              <path d="M113 30l6 10-6 10-6-10Z" fill="none" stroke="#fff" stroke-width="1.3"/>
+              <path d="M98 30q15-6 30 0M98 40q15-6 30 0M98 76q15 6 30 0M98 86q15 6 30 0" stroke="#fff" stroke-width="0.9" opacity="0.6"/>
+
+              <!-- Lipatan tengah & sampul bawah -->
+              <path d="M80 14v92" stroke="#fff" stroke-width="2"/>
+              <path d="M14 96c0 6 4 9 10 8l50-7c4-1 6-2 6-2s2 1 6 2l50 7c6 1 10-2 10-8" fill="none" stroke="#fff" stroke-width="2"/>
             </g>
           </svg>
           <h1 class="page-title">Al-Qur'an</h1>
