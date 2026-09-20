@@ -409,6 +409,15 @@ body{
 .gd-lightbox-next{right:12px;}
 .gd-lightbox-counter{position:absolute;bottom:24px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.8);font-size:12px;}
 
+.sejarah-card{
+  background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:12px;cursor:pointer;
+}
+.sejarah-card img{width:100%;height:120px;object-fit:cover;display:block;}
+.sejarah-card-body{padding:12px 14px;}
+.sejarah-card-body b{font-size:14px;display:block;}
+.sejarah-card-body small{font-size:11px;color:var(--brand);font-weight:600;}
+.sejarah-card-body p{font-size:12px;color:rgba(27,36,32,0.55);margin:6px 0 0;line-height:1.5;}
+
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
   padding:14px;font-weight:700;font-size:14px;margin-top:20px;cursor:pointer;
@@ -667,6 +676,15 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
         <span class="belajar-card-text">
           <b>Galeri Masjid Dunia</b>
           <small>Masjid-masjid bersejarah & terkenal di dunia</small>
+        </span>
+        <span class="belajar-card-arrow">›</span>
+      </button>
+
+      <button class="belajar-card" id="btn-open-sejarah-islam">
+        <span class="belajar-card-icon">📜</span>
+        <span class="belajar-card-text">
+          <b>Sejarah Islam</b>
+          <small>Cerita-cerita sejarah dan peradaban Islam</small>
         </span>
         <span class="belajar-card-arrow">›</span>
       </button>
@@ -991,6 +1009,51 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 
 <!-- ===================== BELAJAR ISLAM (standalone screen) ===================== -->
 <!-- ===================== GALERI MASJID DUNIA (standalone screen) ===================== -->
+<!-- ===================== SEJARAH ISLAM (standalone screen) ===================== -->
+<section id="screen-sejarah-islam" class="screen">
+  <div class="app-shell" style="padding:40px 20px 24px;">
+    <div id="sejarah-view-list">
+      <button class="back-btn" id="sejarah-back-to-app">‹ Kembali</button>
+      <h1 class="page-title">Sejarah Islam</h1>
+      <p class="muted">Cerita-cerita sejarah dan peradaban Islam.</p>
+
+      <button class="belajar-card" id="btn-add-sejarah" hidden style="margin-top:12px;">
+        <span class="belajar-card-icon">➕</span>
+        <span class="belajar-card-text"><b>Tambah Cerita Sejarah</b><small>Khusus admin</small></span>
+        <span class="belajar-card-arrow">›</span>
+      </button>
+
+      <div id="sejarah-list-content" style="margin-top:16px;"></div>
+    </div>
+
+    <div id="sejarah-view-form" hidden>
+      <button class="back-btn" id="sejarah-form-back">‹ Kembali</button>
+      <h1 class="page-title" id="sejarah-form-title">Tambah Cerita Sejarah</h1>
+      <form id="form-sejarah" class="manage-form" style="margin-top:12px;">
+        <input required placeholder="Judul cerita" id="si-title" />
+        <input placeholder="Era/periode (mis. Masa Kenabian, Dinasti Abbasiyah)" id="si-era" />
+        <textarea placeholder="Ringkasan singkat" id="si-summary" rows="2"></textarea>
+        <textarea required placeholder="Isi cerita lengkap (tidak ada batas panjang)" id="si-content" rows="8"></textarea>
+        <label class="photo-picker" id="si-photo-picker-label">
+          <img id="si-photo-preview" hidden />
+          <span id="si-photo-picker-text">📷 Gambar Pendukung (opsional)</span>
+          <input type="file" id="si-photo" accept="image/png,image/jpeg,image/webp" hidden />
+        </label>
+        <p id="si-form-error" class="auth-error" role="alert" hidden></p>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn-secondary" id="btn-cancel-si">Batal</button>
+          <button type="submit" class="btn-primary" style="flex:1;">Simpan</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="sejarah-view-detail" hidden>
+      <button class="back-btn" id="sejarah-detail-back">‹ Kembali</button>
+      <div id="sejarah-detail-content"></div>
+    </div>
+  </div>
+</section>
+
 <section id="screen-galeri-dunia" class="screen">
   <div class="app-shell" style="padding:40px 20px 24px;">
     <button class="back-btn" id="galeri-dunia-back">‹ Kembali</button>
@@ -2423,6 +2486,166 @@ loadPrayerAndHijri()
 // ============================================================
 let isAdminUser = false
 let editingGaleriDuniaId = null
+
+// ============================================================
+// ===== Sejarah Islam (kurasi admin) ===========================
+// ============================================================
+let editingSejarahId = null
+
+document.getElementById('btn-open-sejarah-islam').addEventListener('click', () => {
+  showScreen('sejarah-islam')
+  document.getElementById('sejarah-view-form').hidden = true
+  document.getElementById('sejarah-view-detail').hidden = true
+  document.getElementById('sejarah-view-list').hidden = false
+  loadSejarahList()
+})
+document.getElementById('sejarah-back-to-app').addEventListener('click', () => showScreen('app'))
+
+async function loadSejarahList() {
+  const listEl = document.getElementById('sejarah-list-content')
+  listEl.innerHTML = '<div class="empty-state">Memuat cerita...</div>'
+  const admin = await checkIsAdmin()
+  document.getElementById('btn-add-sejarah').hidden = !admin
+
+  const { data, error } = await supabase.from('sejarah_islam').select('*').order('sort_order', { ascending: true })
+  if (error) { listEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`; return }
+  if (!data.length) {
+    listEl.innerHTML = admin
+      ? '<div class="empty-state tall">Belum ada cerita. Ketuk "Tambah Cerita Sejarah" di atas.</div>'
+      : '<div class="empty-state tall">Belum ada cerita.</div>'
+    return
+  }
+  listEl.innerHTML = data.map((s) => `
+    <div class="sejarah-card" data-id="${s.id}">
+      ${s.image_url ? `<img src="${s.image_url}" alt="${escapeHtml(s.title)}" loading="lazy" />` : ''}
+      <div class="sejarah-card-body">
+        ${s.era ? `<small>${escapeHtml(s.era)}</small>` : ''}
+        <b>${escapeHtml(s.title)}</b>
+        ${s.summary ? `<p>${escapeHtml(s.summary)}</p>` : ''}
+        ${admin ? `
+          <div class="doa-card-actions" style="margin-top:10px;">
+            <button class="doa-action-btn si-edit-btn" data-id="${s.id}">✏️ Edit</button>
+            <button class="doa-action-btn si-delete-btn" data-id="${s.id}">🗑️ Hapus</button>
+          </div>` : ''}
+      </div>
+    </div>
+  `).join('')
+  listEl.querySelectorAll('.sejarah-card').forEach((card) => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.si-edit-btn') || e.target.closest('.si-delete-btn')) return
+      openSejarahDetail(data.find((s) => s.id === card.dataset.id))
+    })
+  })
+  listEl.querySelectorAll('.si-edit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => openSejarahForm(data.find((s) => s.id === btn.dataset.id)))
+  })
+  listEl.querySelectorAll('.si-delete-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Hapus cerita ini?')) return
+      await supabase.from('sejarah_islam').delete().eq('id', btn.dataset.id)
+      loadSejarahList()
+    })
+  })
+}
+
+function openSejarahDetail(item) {
+  document.getElementById('sejarah-view-list').hidden = true
+  document.getElementById('sejarah-view-detail').hidden = false
+  document.getElementById('sejarah-detail-content').innerHTML = `
+    ${item.image_url ? `<img src="${item.image_url}" alt="" style="width:100%;border-radius:16px;margin-bottom:14px;" />` : ''}
+    <div class="article-content">
+      ${item.era ? `<p class="article-meta">${escapeHtml(item.era)}</p>` : ''}
+      <h1>${escapeHtml(item.title)}</h1>
+      <div class="article-body" style="margin-top:12px;">${escapeHtml(item.content)}</div>
+    </div>
+  `
+}
+document.getElementById('sejarah-detail-back').addEventListener('click', () => {
+  document.getElementById('sejarah-view-detail').hidden = true
+  document.getElementById('sejarah-view-list').hidden = false
+})
+
+document.getElementById('btn-add-sejarah').addEventListener('click', () => openSejarahForm(null))
+
+function openSejarahForm(item) {
+  editingSejarahId = item ? item.id : null
+  document.getElementById('sejarah-form-title').textContent = item ? 'Edit Cerita Sejarah' : 'Tambah Cerita Sejarah'
+  document.getElementById('sejarah-view-list').hidden = true
+  document.getElementById('sejarah-view-form').hidden = false
+  document.getElementById('si-form-error').hidden = true
+  document.getElementById('si-title').value = item?.title || ''
+  document.getElementById('si-era').value = item?.era || ''
+  document.getElementById('si-summary').value = item?.summary || ''
+  document.getElementById('si-content').value = item?.content || ''
+  document.getElementById('si-photo').value = ''
+  const preview = document.getElementById('si-photo-preview')
+  if (item?.image_url) { preview.src = item.image_url; preview.hidden = false }
+  else { preview.hidden = true }
+}
+document.getElementById('btn-cancel-si').addEventListener('click', () => {
+  document.getElementById('sejarah-view-form').hidden = true
+  document.getElementById('sejarah-view-list').hidden = false
+  loadSejarahList()
+})
+document.getElementById('sejarah-form-back').addEventListener('click', () => {
+  document.getElementById('sejarah-view-form').hidden = true
+  document.getElementById('sejarah-view-list').hidden = false
+  loadSejarahList()
+})
+
+document.getElementById('si-photo').addEventListener('change', (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  const preview = document.getElementById('si-photo-preview')
+  preview.src = URL.createObjectURL(file)
+  preview.hidden = false
+})
+
+document.getElementById('form-sejarah').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const errEl = document.getElementById('si-form-error')
+  errEl.hidden = true
+  const submitBtn = e.target.querySelector('button[type="submit"]')
+  submitBtn.disabled = true
+  const original = submitBtn.textContent
+  try {
+    const uid = await getCurrentUserId()
+    let imageUrl = null
+    const file = document.getElementById('si-photo').files[0]
+    if (file) {
+      submitBtn.textContent = 'Mengunggah foto...'
+      const ext = file.name.split('.').pop()
+      const path = `${uid}/sejarah-${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('mosque-images').upload(path, file)
+      if (uploadError) throw uploadError
+      const { data: pd } = await supabase.storage.from('mosque-images').getPublicUrl(path)
+      imageUrl = pd.publicUrl
+    }
+    submitBtn.textContent = 'Menyimpan...'
+    const payload = {
+      title: document.getElementById('si-title').value.trim(),
+      era: document.getElementById('si-era').value.trim() || null,
+      summary: document.getElementById('si-summary').value.trim() || null,
+      content: document.getElementById('si-content').value.trim(),
+    }
+    if (imageUrl) payload.image_url = imageUrl
+
+    const { error } = editingSejarahId
+      ? await supabase.from('sejarah_islam').update(payload).eq('id', editingSejarahId)
+      : await supabase.from('sejarah_islam').insert(payload)
+    if (error) throw error
+
+    document.getElementById('sejarah-view-form').hidden = true
+    document.getElementById('sejarah-view-list').hidden = false
+    loadSejarahList()
+  } catch (err) {
+    errEl.textContent = err.message || 'Terjadi kesalahan. Silakan coba lagi.'
+    errEl.hidden = false
+  } finally {
+    submitBtn.disabled = false
+    submitBtn.textContent = original
+  }
+})
 
 document.getElementById('btn-open-galeri-dunia').addEventListener('click', () => {
   showScreen('galeri-dunia')
