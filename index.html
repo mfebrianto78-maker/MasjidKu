@@ -378,7 +378,7 @@ body{
   position:relative;border-radius:20px;overflow:hidden;margin-bottom:16px;
   background:linear-gradient(135deg,var(--brand),var(--brand-dark));min-height:180px;
 }
-.galeri-dunia-card img{width:100%;height:140px;object-fit:cover;display:block;}
+.galeri-dunia-card img{width:100%;height:auto;max-height:280px;object-fit:contain;background:rgba(0,0,0,0.15);display:block;}
 .galeri-dunia-card-body{padding:14px 16px 16px;color:#fff;}
 .galeri-dunia-card-body h3{font-size:16px;font-weight:800;margin:0 0 8px;}
 .galeri-dunia-card-body p{font-size:12.5px;color:rgba(255,255,255,0.85);line-height:1.5;margin:0 0 10px;}
@@ -387,6 +387,8 @@ body{
 .galeri-dunia-no-photo{
   height:100px;display:flex;align-items:center;justify-content:center;font-size:32px;background:rgba(255,255,255,0.1);
 }
+.galeri-dunia-strip{display:flex;gap:4px;overflow-x:auto;padding:6px 6px 0;}
+.galeri-dunia-strip img{width:64px;height:64px;object-fit:cover;border-radius:8px;flex-shrink:0;}
 
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
@@ -986,20 +988,28 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       <input type="hidden" id="gd-id" />
       <input required placeholder="Nama Masjid" id="gd-name" />
       <input placeholder="Lokasi (kota/negara)" id="gd-location" />
-      <textarea required placeholder="Deskripsi singkat" id="gd-desc" rows="3"></textarea>
+      <textarea required placeholder="Deskripsi (tidak ada batas panjang)" id="gd-desc" rows="6"></textarea>
       <div class="form-row">
         <input placeholder="Latitude" id="gd-lat" type="number" step="any" />
         <input placeholder="Longitude" id="gd-lng" type="number" step="any" />
       </div>
       <label class="photo-picker" id="gd-photo-picker-label">
         <img id="gd-photo-preview" hidden />
-        <span id="gd-photo-picker-text">📷 Foto Masjid</span>
+        <span id="gd-photo-picker-text">📷 Foto Sampul (utama)</span>
         <input type="file" id="gd-photo" accept="image/png,image/jpeg,image/webp" hidden />
       </label>
       <p id="gd-form-error" class="auth-error" role="alert" hidden></p>
       <div style="display:flex;gap:8px;">
         <button type="button" class="btn-secondary" id="btn-cancel-gd">Batal</button>
         <button type="submit" class="btn-primary" style="flex:1;">Simpan</button>
+      </div>
+
+      <div id="gd-extra-photos-section" hidden style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
+        <label class="photo-picker" id="gd-extra-photo-picker-label" style="margin-bottom:10px;">
+          <span id="gd-extra-photo-picker-text">🖼️ Tambah Foto ke Galeri (bisa pilih banyak sekaligus)</span>
+          <input type="file" id="gd-extra-photos" accept="image/png,image/jpeg,image/webp" multiple hidden />
+        </label>
+        <div id="gd-extra-photos-grid" class="galeri-grid"></div>
       </div>
     </form>
 
@@ -2422,15 +2432,32 @@ async function loadGaleriDunia() {
       : '<div class="empty-state tall">Belum ada data.</div>'
     return
   }
+
+  const { data: allPhotos } = await supabase
+    .from('galeri_masjid_dunia_photos')
+    .select('*')
+    .in('galeri_id', data.map((m) => m.id))
+    .order('sort_order', { ascending: true })
+  const photosByGaleriId = {}
+  ;(allPhotos || []).forEach((p) => {
+    if (!photosByGaleriId[p.galeri_id]) photosByGaleriId[p.galeri_id] = []
+    photosByGaleriId[p.galeri_id].push(p)
+  })
+
   listEl.innerHTML = data.map((m) => {
     const mapLink = (m.latitude != null && m.longitude != null)
       ? `<a href="https://www.google.com/maps?q=${m.latitude},${m.longitude}" target="_blank" rel="noopener">Peta ›</a>`
+      : ''
+    const extraPhotos = photosByGaleriId[m.id] || []
+    const extraStrip = extraPhotos.length
+      ? `<div class="galeri-dunia-strip">${extraPhotos.map((p) => `<img src="${p.image_url}" alt="" loading="lazy" />`).join('')}</div>`
       : ''
     return `
       <div class="galeri-dunia-card" data-id="${m.id}">
         ${m.image_url
           ? `<img src="${m.image_url}" alt="${escapeHtml(m.name)}" loading="lazy" />`
           : `<div class="galeri-dunia-no-photo">🕌</div>`}
+        ${extraStrip}
         <div class="galeri-dunia-card-body">
           <h3>${escapeHtml(m.name)}</h3>
           <p>${escapeHtml(m.description)}</p>
@@ -2479,17 +2506,76 @@ function openGaleriDuniaForm(item) {
   if (item?.image_url) {
     preview.src = item.image_url
     preview.hidden = false
-    document.getElementById('gd-photo-picker-text').textContent = 'Ganti foto (opsional)'
+    document.getElementById('gd-photo-picker-text').textContent = 'Ganti foto sampul (opsional)'
   } else {
     preview.hidden = true
-    document.getElementById('gd-photo-picker-text').textContent = '📷 Foto Masjid'
+    document.getElementById('gd-photo-picker-text').textContent = '📷 Foto Sampul (utama)'
+  }
+
+  const extraSection = document.getElementById('gd-extra-photos-section')
+  if (editingGaleriDuniaId) {
+    extraSection.hidden = false
+    loadGdExtraPhotos(editingGaleriDuniaId)
+  } else {
+    extraSection.hidden = true
   }
 }
+
+async function loadGdExtraPhotos(galeriId) {
+  const gridEl = document.getElementById('gd-extra-photos-grid')
+  gridEl.innerHTML = '<div class="empty-state">Memuat...</div>'
+  const { data, error } = await supabase
+    .from('galeri_masjid_dunia_photos')
+    .select('*')
+    .eq('galeri_id', galeriId)
+    .order('sort_order', { ascending: true })
+  if (error) { gridEl.innerHTML = `<div class="empty-state">Gagal memuat: ${error.message}</div>`; return }
+  if (!data.length) { gridEl.innerHTML = '<div class="empty-state">Belum ada foto tambahan.</div>'; return }
+  gridEl.innerHTML = data.map((p) => `
+    <div class="galeri-item">
+      <img src="${p.image_url}" alt="" loading="lazy" />
+      <button class="galeri-item-delete" data-id="${p.id}" aria-label="Hapus foto ini">✕</button>
+    </div>
+  `).join('')
+  gridEl.querySelectorAll('.galeri-item-delete').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      await supabase.from('galeri_masjid_dunia_photos').delete().eq('id', btn.dataset.id)
+      loadGdExtraPhotos(galeriId)
+    })
+  })
+}
+
+document.getElementById('gd-extra-photos').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files)
+  if (!files.length || !editingGaleriDuniaId) return
+  const label = document.getElementById('gd-extra-photo-picker-text')
+  const original = label.textContent
+  const uid = await getCurrentUserId()
+  try {
+    for (let i = 0; i < files.length; i++) {
+      label.textContent = `Mengunggah ${i + 1} dari ${files.length}...`
+      const file = files[i]
+      const ext = file.name.split('.').pop()
+      const path = `${uid}/galeri-dunia-extra-${Date.now()}-${i}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('mosque-images').upload(path, file)
+      if (uploadError) throw uploadError
+      const { data: publicData } = supabase.storage.from('mosque-images').getPublicUrl(path)
+      await supabase.from('galeri_masjid_dunia_photos').insert({ galeri_id: editingGaleriDuniaId, image_url: publicData.publicUrl })
+    }
+    loadGdExtraPhotos(editingGaleriDuniaId)
+  } catch (err) {
+    alert(err.message || 'Gagal mengunggah salah satu foto.')
+  } finally {
+    label.textContent = original
+    e.target.value = ''
+  }
+})
 
 document.getElementById('btn-cancel-gd').addEventListener('click', () => {
   document.getElementById('form-galeri-dunia').hidden = true
   document.getElementById('galeri-dunia-list').hidden = false
   document.getElementById('btn-add-galeri-dunia').hidden = !isAdminUser
+  loadGaleriDunia()
 })
 
 document.getElementById('gd-photo').addEventListener('change', (e) => {
@@ -2533,18 +2619,19 @@ document.getElementById('form-galeri-dunia').addEventListener('submit', async (e
     }
     if (imageUrl) payload.image_url = imageUrl
 
-    let error
     if (editingGaleriDuniaId) {
-      ;({ error } = await supabase.from('galeri_masjid_dunia').update(payload).eq('id', editingGaleriDuniaId))
+      const { error } = await supabase.from('galeri_masjid_dunia').update(payload).eq('id', editingGaleriDuniaId)
+      if (error) throw error
+      document.getElementById('form-galeri-dunia').hidden = true
+      document.getElementById('galeri-dunia-list').hidden = false
+      document.getElementById('btn-add-galeri-dunia').hidden = !isAdminUser
+      loadGaleriDunia()
     } else {
-      ;({ error } = await supabase.from('galeri_masjid_dunia').insert(payload))
+      const { data: inserted, error } = await supabase.from('galeri_masjid_dunia').insert(payload).select().single()
+      if (error) throw error
+      // Tetap di form, beralih ke mode edit supaya bisa langsung tambah foto galeri
+      openGaleriDuniaForm(inserted)
     }
-    if (error) throw error
-
-    document.getElementById('form-galeri-dunia').hidden = true
-    document.getElementById('galeri-dunia-list').hidden = false
-    document.getElementById('btn-add-galeri-dunia').hidden = !isAdminUser
-    loadGaleriDunia()
   } catch (err) {
     errEl.textContent = err.message || 'Terjadi kesalahan. Silakan coba lagi.'
     errEl.hidden = false
