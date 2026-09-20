@@ -975,6 +975,34 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
     <button class="back-btn" id="galeri-dunia-back">‹ Kembali</button>
     <h1 class="page-title">Galeri Masjid Dunia</h1>
     <p class="muted">Masjid-masjid bersejarah dan terkenal di berbagai penjuru dunia.</p>
+
+    <button class="belajar-card" id="btn-add-galeri-dunia" hidden style="margin-top:12px;">
+      <span class="belajar-card-icon">➕</span>
+      <span class="belajar-card-text"><b>Tambah Masjid Dunia</b><small>Khusus admin</small></span>
+      <span class="belajar-card-arrow">›</span>
+    </button>
+
+    <form id="form-galeri-dunia" class="manage-form" hidden style="margin-top:12px;">
+      <input type="hidden" id="gd-id" />
+      <input required placeholder="Nama Masjid" id="gd-name" />
+      <input placeholder="Lokasi (kota/negara)" id="gd-location" />
+      <textarea required placeholder="Deskripsi singkat" id="gd-desc" rows="3"></textarea>
+      <div class="form-row">
+        <input placeholder="Latitude" id="gd-lat" type="number" step="any" />
+        <input placeholder="Longitude" id="gd-lng" type="number" step="any" />
+      </div>
+      <label class="photo-picker" id="gd-photo-picker-label">
+        <img id="gd-photo-preview" hidden />
+        <span id="gd-photo-picker-text">📷 Foto Masjid</span>
+        <input type="file" id="gd-photo" accept="image/png,image/jpeg,image/webp" hidden />
+      </label>
+      <p id="gd-form-error" class="auth-error" role="alert" hidden></p>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn-secondary" id="btn-cancel-gd">Batal</button>
+        <button type="submit" class="btn-primary" style="flex:1;">Simpan</button>
+      </div>
+    </form>
+
     <div id="galeri-dunia-list" style="margin-top:16px;"></div>
   </div>
 </section>
@@ -2356,6 +2384,9 @@ loadPrayerAndHijri()
 // ============================================================
 // ===== Galeri Masjid Dunia (kurasi admin) =====================
 // ============================================================
+let isAdminUser = false
+let editingGaleriDuniaId = null
+
 document.getElementById('btn-open-galeri-dunia').addEventListener('click', () => {
   showScreen('galeri-dunia')
   loadGaleriDunia()
@@ -2363,9 +2394,20 @@ document.getElementById('btn-open-galeri-dunia').addEventListener('click', () =>
 
 document.getElementById('galeri-dunia-back').addEventListener('click', () => showScreen('app'))
 
+async function checkIsAdmin() {
+  const uid = await getCurrentUserId()
+  if (!uid) return false
+  const { data } = await supabase.from('profiles').select('is_admin').eq('id', uid).maybeSingle()
+  return !!data?.is_admin
+}
+
 async function loadGaleriDunia() {
   const listEl = document.getElementById('galeri-dunia-list')
   listEl.innerHTML = '<div class="empty-state">Memuat galeri...</div>'
+
+  isAdminUser = await checkIsAdmin()
+  document.getElementById('btn-add-galeri-dunia').hidden = !isAdminUser
+
   const { data, error } = await supabase
     .from('galeri_masjid_dunia')
     .select('*')
@@ -2375,7 +2417,9 @@ async function loadGaleriDunia() {
     return
   }
   if (!data.length) {
-    listEl.innerHTML = '<div class="empty-state tall">Belum ada data. Admin bisa menambahkannya lewat Supabase dashboard (tabel galeri_masjid_dunia).</div>'
+    listEl.innerHTML = isAdminUser
+      ? '<div class="empty-state tall">Belum ada data. Ketuk "Tambah Masjid Dunia" di atas.</div>'
+      : '<div class="empty-state tall">Belum ada data.</div>'
     return
   }
   listEl.innerHTML = data.map((m) => {
@@ -2383,7 +2427,7 @@ async function loadGaleriDunia() {
       ? `<a href="https://www.google.com/maps?q=${m.latitude},${m.longitude}" target="_blank" rel="noopener">Peta ›</a>`
       : ''
     return `
-      <div class="galeri-dunia-card">
+      <div class="galeri-dunia-card" data-id="${m.id}">
         ${m.image_url
           ? `<img src="${m.image_url}" alt="${escapeHtml(m.name)}" loading="lazy" />`
           : `<div class="galeri-dunia-no-photo">🕌</div>`}
@@ -2394,11 +2438,121 @@ async function loadGaleriDunia() {
             <span>${m.latitude != null ? `📍 ${m.latitude.toFixed(4)}°, ${m.longitude.toFixed(4)}°` : escapeHtml(m.location || '')}</span>
             ${mapLink}
           </div>
+          ${isAdminUser ? `
+            <div class="doa-card-actions" style="margin-top:10px;">
+              <button class="doa-action-btn gd-edit-btn" data-id="${m.id}" style="background:rgba(255,255,255,0.2);color:#fff;">✏️ Edit</button>
+              <button class="doa-action-btn gd-delete-btn" data-id="${m.id}" style="background:rgba(255,255,255,0.2);color:#fff;">🗑️ Hapus</button>
+            </div>` : ''}
         </div>
       </div>
     `
   }).join('')
+
+  listEl.querySelectorAll('.gd-edit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => openGaleriDuniaForm(data.find((m) => m.id === btn.dataset.id)))
+  })
+  listEl.querySelectorAll('.gd-delete-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Hapus masjid ini dari galeri?')) return
+      await supabase.from('galeri_masjid_dunia').delete().eq('id', btn.dataset.id)
+      loadGaleriDunia()
+    })
+  })
 }
+
+document.getElementById('btn-add-galeri-dunia').addEventListener('click', () => openGaleriDuniaForm(null))
+
+function openGaleriDuniaForm(item) {
+  editingGaleriDuniaId = item ? item.id : null
+  document.getElementById('galeri-dunia-list').hidden = true
+  document.getElementById('btn-add-galeri-dunia').hidden = true
+  document.getElementById('form-galeri-dunia').hidden = false
+  document.getElementById('gd-form-error').hidden = true
+
+  document.getElementById('gd-name').value = item?.name || ''
+  document.getElementById('gd-location').value = item?.location || ''
+  document.getElementById('gd-desc').value = item?.description || ''
+  document.getElementById('gd-lat').value = item?.latitude ?? ''
+  document.getElementById('gd-lng').value = item?.longitude ?? ''
+  document.getElementById('gd-photo').value = ''
+  const preview = document.getElementById('gd-photo-preview')
+  if (item?.image_url) {
+    preview.src = item.image_url
+    preview.hidden = false
+    document.getElementById('gd-photo-picker-text').textContent = 'Ganti foto (opsional)'
+  } else {
+    preview.hidden = true
+    document.getElementById('gd-photo-picker-text').textContent = '📷 Foto Masjid'
+  }
+}
+
+document.getElementById('btn-cancel-gd').addEventListener('click', () => {
+  document.getElementById('form-galeri-dunia').hidden = true
+  document.getElementById('galeri-dunia-list').hidden = false
+  document.getElementById('btn-add-galeri-dunia').hidden = !isAdminUser
+})
+
+document.getElementById('gd-photo').addEventListener('change', (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  const preview = document.getElementById('gd-photo-preview')
+  preview.src = URL.createObjectURL(file)
+  preview.hidden = false
+  document.getElementById('gd-photo-picker-text').textContent = file.name
+})
+
+document.getElementById('form-galeri-dunia').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const errEl = document.getElementById('gd-form-error')
+  errEl.hidden = true
+  const submitBtn = e.target.querySelector('button[type="submit"]')
+  submitBtn.disabled = true
+  const originalLabel = submitBtn.textContent
+
+  try {
+    const uid = await getCurrentUserId()
+    let imageUrl = null
+    const photoFile = document.getElementById('gd-photo').files[0]
+    if (photoFile) {
+      submitBtn.textContent = 'Mengunggah foto...'
+      const ext = photoFile.name.split('.').pop()
+      const path = `${uid}/galeri-dunia-${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('mosque-images').upload(path, photoFile)
+      if (uploadError) throw uploadError
+      const { data: publicData } = supabase.storage.from('mosque-images').getPublicUrl(path)
+      imageUrl = publicData.publicUrl
+    }
+
+    submitBtn.textContent = 'Menyimpan...'
+    const payload = {
+      name: document.getElementById('gd-name').value.trim(),
+      location: document.getElementById('gd-location').value.trim() || null,
+      description: document.getElementById('gd-desc').value.trim(),
+      latitude: document.getElementById('gd-lat').value ? Number(document.getElementById('gd-lat').value) : null,
+      longitude: document.getElementById('gd-lng').value ? Number(document.getElementById('gd-lng').value) : null,
+    }
+    if (imageUrl) payload.image_url = imageUrl
+
+    let error
+    if (editingGaleriDuniaId) {
+      ;({ error } = await supabase.from('galeri_masjid_dunia').update(payload).eq('id', editingGaleriDuniaId))
+    } else {
+      ;({ error } = await supabase.from('galeri_masjid_dunia').insert(payload))
+    }
+    if (error) throw error
+
+    document.getElementById('form-galeri-dunia').hidden = true
+    document.getElementById('galeri-dunia-list').hidden = false
+    document.getElementById('btn-add-galeri-dunia').hidden = !isAdminUser
+    loadGaleriDunia()
+  } catch (err) {
+    errEl.textContent = err.message || 'Terjadi kesalahan. Silakan coba lagi.'
+    errEl.hidden = false
+  } finally {
+    submitBtn.disabled = false
+    submitBtn.textContent = originalLabel
+  }
+})
 
 document.getElementById('btn-open-belajar').addEventListener('click', () => {
   showScreen('belajar')
