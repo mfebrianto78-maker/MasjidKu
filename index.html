@@ -388,7 +388,26 @@ body{
   height:100px;display:flex;align-items:center;justify-content:center;font-size:32px;background:rgba(255,255,255,0.1);
 }
 .galeri-dunia-strip{display:flex;gap:4px;overflow-x:auto;padding:6px 6px 0;}
-.galeri-dunia-strip img{width:64px;height:64px;object-fit:cover;border-radius:8px;flex-shrink:0;}
+.galeri-dunia-strip img{width:64px;height:64px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;}
+.galeri-dunia-card > img{cursor:pointer;}
+
+.gd-lightbox{
+  position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:50;
+  display:flex;align-items:center;justify-content:center;
+}
+.gd-lightbox[hidden]{display:none;}
+.gd-lightbox img{max-width:92vw;max-height:80vh;object-fit:contain;border-radius:8px;}
+.gd-lightbox-close{
+  position:absolute;top:20px;right:16px;background:rgba(255,255,255,0.15);color:#fff;border:none;
+  width:36px;height:36px;border-radius:50%;font-size:16px;
+}
+.gd-lightbox-nav{
+  position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.15);color:#fff;
+  border:none;width:44px;height:44px;border-radius:50%;font-size:22px;
+}
+.gd-lightbox-prev{left:12px;}
+.gd-lightbox-next{right:12px;}
+.gd-lightbox-counter{position:absolute;bottom:24px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.8);font-size:12px;}
 
 .btn-outline-danger{
   width:100%;border:1px solid #fca5a5;color:#ef4444;background:none;border-radius:12px;
@@ -1014,6 +1033,14 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
     </form>
 
     <div id="galeri-dunia-list" style="margin-top:16px;"></div>
+  </div>
+
+  <div id="gd-lightbox" class="gd-lightbox" hidden>
+    <button class="gd-lightbox-close" id="gd-lightbox-close" aria-label="Tutup">✕</button>
+    <button class="gd-lightbox-nav gd-lightbox-prev" id="gd-lightbox-prev" aria-label="Foto sebelumnya">‹</button>
+    <img id="gd-lightbox-img" src="" alt="" />
+    <button class="gd-lightbox-nav gd-lightbox-next" id="gd-lightbox-next" aria-label="Foto berikutnya">›</button>
+    <div class="gd-lightbox-counter" id="gd-lightbox-counter"></div>
   </div>
 </section>
 
@@ -2485,7 +2512,57 @@ async function loadGaleriDunia() {
       loadGaleriDunia()
     })
   })
+
+  // Lightbox: ketuk foto sampul atau thumbnail untuk lihat besar
+  listEl.querySelectorAll('.galeri-dunia-card').forEach((card) => {
+    const m = data.find((x) => x.id === card.dataset.id)
+    const photos = []
+    if (m.image_url) photos.push(m.image_url)
+    ;(photosByGaleriId[m.id] || []).forEach((p) => photos.push(p.image_url))
+    if (!photos.length) return
+
+    const coverImg = card.querySelector('img')
+    if (coverImg) coverImg.addEventListener('click', () => openGdLightbox(photos, 0))
+    card.querySelectorAll('.galeri-dunia-strip img').forEach((thumb, i) => {
+      thumb.addEventListener('click', () => openGdLightbox(photos, i + (m.image_url ? 1 : 0)))
+    })
+  })
 }
+
+// ---- Lightbox ----
+let gdLightboxPhotos = []
+let gdLightboxIndex = 0
+
+function openGdLightbox(photos, index) {
+  gdLightboxPhotos = photos
+  gdLightboxIndex = index
+  renderGdLightbox()
+  document.getElementById('gd-lightbox').hidden = false
+}
+
+function renderGdLightbox() {
+  document.getElementById('gd-lightbox-img').src = gdLightboxPhotos[gdLightboxIndex]
+  document.getElementById('gd-lightbox-counter').textContent = `${gdLightboxIndex + 1} / ${gdLightboxPhotos.length}`
+  const multi = gdLightboxPhotos.length > 1
+  document.getElementById('gd-lightbox-prev').hidden = !multi
+  document.getElementById('gd-lightbox-next').hidden = !multi
+}
+
+document.getElementById('gd-lightbox-close').addEventListener('click', () => {
+  document.getElementById('gd-lightbox').hidden = true
+})
+document.getElementById('gd-lightbox').addEventListener('click', (e) => {
+  if (e.target.id === 'gd-lightbox') document.getElementById('gd-lightbox').hidden = true
+})
+document.getElementById('gd-lightbox-prev').addEventListener('click', () => {
+  gdLightboxIndex = (gdLightboxIndex - 1 + gdLightboxPhotos.length) % gdLightboxPhotos.length
+  renderGdLightbox()
+})
+document.getElementById('gd-lightbox-next').addEventListener('click', () => {
+  gdLightboxIndex = (gdLightboxIndex + 1) % gdLightboxPhotos.length
+  renderGdLightbox()
+})
+
 
 document.getElementById('btn-add-galeri-dunia').addEventListener('click', () => openGaleriDuniaForm(null))
 
