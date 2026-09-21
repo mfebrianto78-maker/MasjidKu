@@ -279,6 +279,18 @@ body{
 .waktu-full-grid .wf-row:last-child{border-bottom:none;}
 .waktu-full-grid .wf-row.is-next{font-weight:800;color:#fff;}
 
+.hari-besar-next{
+  background:linear-gradient(135deg,var(--gold),#B8862E);border-radius:16px;padding:14px 16px;color:#fff;
+}
+.hari-besar-next b{font-size:14px;display:block;}
+.hari-besar-next small{font-size:11px;color:rgba(255,255,255,0.85);}
+.hari-besar-row{
+  display:flex;justify-content:space-between;align-items:center;padding:10px 4px;
+  border-bottom:1px solid var(--border);font-size:13px;
+}
+.hari-besar-row:last-child{border-bottom:none;}
+.hari-besar-row .hb-date{color:var(--brand);font-weight:700;font-size:12px;white-space:nowrap;margin-left:8px;}
+
 .qibla-box{display:flex;flex-direction:column;align-items:center;margin-top:8px;}
 .qibla-compass{
   width:160px;height:160px;border-radius:50%;border:3px solid var(--brand-light);
@@ -1012,6 +1024,14 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
     <div class="detail-section">
       <h3>Kalender Hijriyah</h3>
       <p id="waktu-hijri-full">Memuat tanggal Hijriyah...</p>
+    </div>
+
+    <div class="detail-section">
+      <h3>Hari Besar Islam</h3>
+      <div class="hari-besar-next" id="hari-besar-next">
+        <div class="empty-state">Memuat...</div>
+      </div>
+      <div id="hari-besar-list" style="margin-top:10px;"></div>
     </div>
 
     <div class="detail-section">
@@ -2492,11 +2512,83 @@ async function openWaktuScreen() {
   document.getElementById('qibla-degree-label').textContent = 'Menghitung arah kiblat...'
   await loadPrayerAndHijri()
   await loadQibla()
+  await loadHariBesarIslam()
 }
 
 document.getElementById('btn-open-waktu-grid').addEventListener('click', openWaktuScreen)
 document.getElementById('btn-lihat-semua-jadwal').addEventListener('click', openWaktuScreen)
 document.getElementById('waktu-back-to-app').addEventListener('click', () => showScreen('app'))
+
+// ---- Hari Besar Islam (dihitung otomatis dari kalender Hijriyah) ----
+const HARI_BESAR_LIST = [
+  { name: 'Tahun Baru Islam (1 Muharram)', hm: 1, hd: 1 },
+  { name: 'Hari Asyura (10 Muharram)', hm: 1, hd: 10 },
+  { name: 'Maulid Nabi Muhammad SAW', hm: 3, hd: 12 },
+  { name: "Isra Mi'raj", hm: 7, hd: 27 },
+  { name: 'Awal Ramadan', hm: 9, hd: 1 },
+  { name: "Nuzulul Qur'an", hm: 9, hd: 17 },
+  { name: 'Malam Lailatul Qadar (perkiraan)', hm: 9, hd: 27 },
+  { name: 'Idul Fitri', hm: 10, hd: 1 },
+  { name: 'Hari Arafah', hm: 12, hd: 9 },
+  { name: 'Idul Adha', hm: 12, hd: 10 },
+  { name: 'Akhir Hari Tasyrik', hm: 12, hd: 13 },
+]
+
+async function hijriToGregorian(day, month, year) {
+  const res = await fetch(`${ALADHAN_API}/hToG?date=${pad2(day)}-${pad2(month)}-${year}`)
+  const json = await res.json()
+  const g = json.data.gregorian
+  return new Date(`${g.year}-${pad2(Number(g.month.number))}-${pad2(Number(g.day))}`)
+}
+
+async function loadHariBesarIslam() {
+  const nextEl = document.getElementById('hari-besar-next')
+  const listEl = document.getElementById('hari-besar-list')
+  nextEl.innerHTML = '<div class="empty-state">Memuat...</div>'
+  listEl.innerHTML = ''
+
+  if (!todayHijri) { nextEl.innerHTML = '<div class="empty-state">Gagal memuat tanggal Hijriyah.</div>'; return }
+
+  const currentHijriYear = Number(todayHijri.year)
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+
+  try {
+    // hitung untuk tahun Hijriyah ini & tahun berikutnya, supaya cakupan 12 bulan ke depan selalu ada
+    const results = []
+    for (const yearOffset of [0, 1]) {
+      const y = currentHijriYear + yearOffset
+      for (const h of HARI_BESAR_LIST) {
+        const gDate = await hijriToGregorian(h.hd, h.hm, y)
+        results.push({ name: h.name, date: gDate })
+      }
+    }
+    // hanya yang akan datang (atau hari ini), urutkan, ambil 12 terdekat
+    const upcoming = results
+      .filter((r) => r.date >= now)
+      .sort((a, b) => a.date - b.date)
+      .slice(0, 12)
+
+    if (!upcoming.length) { nextEl.innerHTML = '<div class="empty-state">Data tidak tersedia.</div>'; return }
+
+    const next = upcoming[0]
+    const daysLeft = Math.round((next.date - now) / 86400000)
+    nextEl.innerHTML = `
+      <small>Hari Besar Berikutnya</small>
+      <b>${escapeHtml(next.name)}</b>
+      <small>${next.date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} · ${daysLeft === 0 ? 'Hari ini' : daysLeft + ' hari lagi'}</small>
+    `
+
+    listEl.innerHTML = upcoming.slice(1).map((r) => `
+      <div class="hari-besar-row">
+        <span>${escapeHtml(r.name)}</span>
+        <span class="hb-date">${r.date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+      </div>
+    `).join('')
+  } catch (err) {
+    nextEl.innerHTML = '<div class="empty-state">Gagal memuat data hari besar.</div>'
+  }
+}
 
 // Muat jadwal sholat mini di Beranda begitu app dibuka
 loadPrayerAndHijri()
