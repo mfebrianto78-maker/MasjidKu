@@ -243,6 +243,13 @@ body{
 .belajar-card-text b{font-size:14px;color:var(--brand-dark);}
 .belajar-card-text small{font-size:11px;color:rgba(27,36,32,0.5);margin-top:2px;}
 .belajar-card-arrow{font-size:20px;color:var(--brand);}
+.belajar-card-green{
+  background:linear-gradient(135deg,var(--brand),var(--brand-dark)) !important;border:none !important;
+  box-shadow:0 4px 12px rgba(15,92,63,0.15);
+}
+.belajar-card-green .belajar-card-text b{color:#fff;}
+.belajar-card-green .belajar-card-text small{color:rgba(255,255,255,0.75);}
+.belajar-card-green .belajar-card-arrow{color:#fff;}
 
 .article-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer;}
 .article-card b{font-size:14px;display:block;margin-bottom:4px;}
@@ -521,8 +528,8 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 
 .doa-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
 .doa-item{
-  background:#fff;border:1px solid var(--border);border-radius:20px;padding:16px;
-  font-size:14px;font-weight:600;color:rgba(27,36,32,0.8);
+  background:linear-gradient(135deg,var(--brand),var(--brand-dark));border:none;border-radius:20px;padding:16px;
+  font-size:14px;font-weight:700;color:#fff;box-shadow:0 4px 12px rgba(15,92,63,0.15);
 }
 .doa-cat-item{
   background:linear-gradient(135deg,var(--brand),var(--brand-dark));border:none;border-radius:20px;padding:16px;
@@ -1157,7 +1164,7 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
         <div class="empty-state">Memuat kategori...</div>
       </div>
 
-      <button class="belajar-card" id="btn-open-ceramah" style="margin-top:16px;">
+      <button class="belajar-card belajar-card-green" id="btn-open-ceramah" style="margin-top:16px;">
         <span class="belajar-card-icon">🎥</span>
         <span class="belajar-card-text">
           <b>Ceramah & Kajian Video</b>
@@ -3129,7 +3136,7 @@ async function loadBelajarCategories() {
   categories.forEach((cat) => {
     const item = document.createElement('div')
     item.className = 'doa-item'
-    item.innerHTML = `${escapeHtml(cat)}<br><span class="masjid-card-dist">${counts[cat]} materi</span>`
+    item.innerHTML = `${escapeHtml(cat)}<br><span class="masjid-card-dist" style="color:rgba(255,255,255,0.85);">${counts[cat]} materi</span>`
     item.addEventListener('click', () => openBelajarCategory(cat))
     gridEl.appendChild(item)
   })
