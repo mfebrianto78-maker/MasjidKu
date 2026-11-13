@@ -332,6 +332,23 @@ body{
 .manage-item-body small{font-size:11px;color:rgba(27,36,32,0.5);}
 .manage-item-body p{font-size:12px;color:rgba(27,36,32,0.6);margin:4px 0 0;}
 .manage-delete-btn{background:none;border:none;color:#ef4444;font-size:12px;font-weight:700;flex-shrink:0;}
+.verifikasi-card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:12px;}
+.verifikasi-card-photo{width:100%;height:120px;object-fit:cover;display:block;background:var(--brand-light);}
+.verifikasi-card-body{padding:12px 14px;}
+.verifikasi-card-body b{font-size:14px;display:block;}
+.verifikasi-card-body small{font-size:11px;color:rgba(27,36,32,0.5);}
+.verifikasi-card-body p{font-size:12px;color:rgba(27,36,32,0.6);margin:6px 0 0;line-height:1.5;}
+.verifikasi-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;margin-top:6px;}
+.verifikasi-badge.pending{background:#fef3c7;color:#92400e;}
+.verifikasi-badge.verified{background:var(--brand-light);color:var(--brand);}
+.verifikasi-badge.rejected{background:#fee2e2;color:#991b1b;}
+.verifikasi-badge.suspended{background:#e5e7eb;color:#374151;}
+.verifikasi-actions{display:flex;gap:8px;margin-top:12px;}
+.verifikasi-actions button{flex:1;border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:700;color:#fff;}
+.vf-approve{background:var(--brand);}
+.vf-reject{background:#ef4444;}
+.vf-suspend{background:#6b7280;}
+
 .galeri-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
 .galeri-item{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:1;background:var(--brand-light);}
 .galeri-item img{width:100%;height:100%;object-fit:cover;}
@@ -787,6 +804,11 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
       <div id="masjid-view-list">
         <h1 class="page-title">Temukan masjid di sekitar Anda</h1>
         <p class="muted">Setiap masjid adalah ruang ibadah, ilmu, dan kebaikan bagi umat.</p>
+        <button class="belajar-card belajar-card-green" id="btn-open-verifikasi" hidden style="margin-top:12px;">
+          <span class="belajar-card-icon">🛡️</span>
+          <span class="belajar-card-text"><b>Verifikasi Masjid</b><small id="verifikasi-pending-count">Khusus admin</small></span>
+          <span class="belajar-card-arrow">›</span>
+        </button>
         <input id="masjid-search" class="search-input" placeholder="Cari nama masjid, alamat, atau lokasi..." />
         <div class="chip-row" id="masjid-filters">
           <span class="chip active" data-filter="semua">Semua</span>
@@ -1057,6 +1079,24 @@ h2.mt{margin-top:24px;font-size:14px;font-weight:700;}
 <!-- ===================== BELAJAR ISLAM (standalone screen) ===================== -->
 <!-- ===================== GALERI MASJID DUNIA (standalone screen) ===================== -->
 <!-- ===================== SEJARAH ISLAM (standalone screen) ===================== -->
+<!-- ===================== VERIFIKASI MASJID (standalone screen, admin) ===================== -->
+<section id="screen-verifikasi" class="screen">
+  <div class="app-shell" style="padding:40px 20px 24px;">
+    <button class="back-btn" id="verifikasi-back">‹ Kembali</button>
+    <h1 class="page-title">Verifikasi Masjid</h1>
+    <p class="muted">Tinjau masjid yang diajukan user sebelum tampil di direktori publik.</p>
+
+    <div class="chip-row" id="verifikasi-filters" style="margin-top:12px;">
+      <span class="chip active" data-vfilter="pending">Menunggu</span>
+      <span class="chip" data-vfilter="verified">Terverifikasi</span>
+      <span class="chip" data-vfilter="rejected">Ditolak</span>
+      <span class="chip" data-vfilter="suspended">Disuspend</span>
+    </div>
+
+    <div id="verifikasi-list" style="margin-top:16px;"></div>
+  </div>
+</section>
+
 <section id="screen-sejarah-islam" class="screen">
   <div class="app-shell" style="padding:40px 20px 24px;">
     <div id="sejarah-view-list">
@@ -1421,6 +1461,14 @@ async function loadMasjidList() {
   if (!supabase) {
     listEl.innerHTML = '<div class="empty-state tall">Supabase belum terhubung.</div>'
     return
+  }
+
+  const vfBtn = document.getElementById('btn-open-verifikasi')
+  const admin = await checkIsAdmin()
+  vfBtn.hidden = !admin
+  if (admin) {
+    const { count } = await supabase.from('masjids').select('id', { count: 'exact', head: true }).eq('verification_status', 'pending')
+    document.getElementById('verifikasi-pending-count').textContent = count ? `${count} menunggu verifikasi` : 'Tidak ada yang menunggu'
   }
 
   const keyword = document.getElementById('masjid-search').value.trim()
@@ -1953,6 +2001,71 @@ document.getElementById('mg-photo').addEventListener('change', async (e) => {
 })
 
 // ============================================================
+// ============================================================
+// ===== Verifikasi Masjid (admin) ==============================
+// ============================================================
+let currentVfFilter = 'pending'
+
+document.getElementById('btn-open-verifikasi').addEventListener('click', () => {
+  showScreen('verifikasi')
+  loadVerifikasiList()
+})
+document.getElementById('verifikasi-back').addEventListener('click', () => {
+  showScreen('app')
+  loadMasjidList()
+})
+
+document.getElementById('verifikasi-filters').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip')
+  if (!chip) return
+  document.querySelectorAll('#verifikasi-filters .chip').forEach((c) => c.classList.remove('active'))
+  chip.classList.add('active')
+  currentVfFilter = chip.dataset.vfilter
+  loadVerifikasiList()
+})
+
+async function loadVerifikasiList() {
+  const listEl = document.getElementById('verifikasi-list')
+  listEl.innerHTML = '<div class="empty-state">Memuat...</div>'
+
+  const { data, error } = await supabase
+    .from('masjids')
+    .select('*')
+    .eq('verification_status', currentVfFilter)
+    .order('created_at', { ascending: false })
+  if (error) { listEl.innerHTML = `<div class="empty-state tall">Gagal memuat: ${error.message}</div>`; return }
+  if (!data.length) { listEl.innerHTML = '<div class="empty-state tall">Tidak ada data di kategori ini.</div>'; return }
+
+  const badgeLabel = { pending: 'Menunggu', verified: 'Terverifikasi', rejected: 'Ditolak', suspended: 'Disuspend' }
+
+  listEl.innerHTML = data.map((m) => `
+    <div class="verifikasi-card" data-id="${m.id}">
+      ${m.photo_url ? `<img src="${m.photo_url}" alt="${escapeHtml(m.name)}" class="verifikasi-card-photo" loading="lazy" />` : ''}
+      <div class="verifikasi-card-body">
+        <b>${escapeHtml(m.name)}</b>
+        <small>${escapeHtml(m.address || '-')}${m.city ? ', ' + escapeHtml(m.city) : ''}</small>
+        <span class="verifikasi-badge ${m.verification_status}">${badgeLabel[m.verification_status]}</span>
+        ${m.description ? `<p>${escapeHtml(m.description)}</p>` : ''}
+        <div class="verifikasi-actions">
+          ${m.verification_status !== 'verified' ? `<button class="vf-approve" data-action="verified" data-id="${m.id}">✅ Verifikasi</button>` : ''}
+          ${m.verification_status !== 'rejected' ? `<button class="vf-reject" data-action="rejected" data-id="${m.id}">❌ Tolak</button>` : ''}
+          ${m.verification_status === 'verified' ? `<button class="vf-suspend" data-action="suspended" data-id="${m.id}">⏸ Suspend</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('')
+
+  listEl.querySelectorAll('[data-action]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const action = btn.dataset.action
+      if (!confirm(`Ubah status masjid ini menjadi "${badgeLabel[action]}"?`)) return
+      const { error } = await supabase.from('masjids').update({ verification_status: action }).eq('id', btn.dataset.id)
+      if (error) { alert(error.message); return }
+      loadVerifikasiList()
+    })
+  })
+}
+
 // ===== Phase 4: Al-Qur'an (EQuran.id API) ===================
 // ============================================================
 const QURAN_API = 'https://equran.id/api/v2'
